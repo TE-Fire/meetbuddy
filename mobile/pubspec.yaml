@@ -21,3 +21,12 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # 自带字体，运行时零外网请求。关键技巧：把 NotoSansSC 注册成 "Roboto" 这个族名——
+  # 引擎对没写 fontFamily 的 TextStyle 默认回落到 'Roboto'，回落到打包的中文字体上，
+  # 就不会再按 unicode-range 去 gstatic 下载切片（国内网络下时通时断，失败的切片变方框）。
+  # NotoSansSC 为可变字体（OFL），拉丁/数字/中文全覆盖，粗体走合成加粗。
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/NotoSansSC-VF.ttf

@@ -6,6 +6,7 @@ import '../state/session_state.dart';
 import '../widget/activity_card.dart';
 import '../widget/category_visual.dart';
 import '../widget/state_views.dart';
+import '../widget/ui.dart';
 import 'activity_detail_page.dart';
 
 class ActivityFeedPage extends StatefulWidget {
@@ -126,7 +127,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
 
   Widget _body(BuildContext context, ActivityState state) {
     if (state.feed.isEmpty && state.loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SingleChildScrollView(child: SkeletonList(rows: 5));
     }
     if (state.feed.isEmpty && state.error != null) {
       return ErrorView(message: state.error!, onRetry: () => state.loadFeed());
@@ -154,16 +155,19 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
             );
           }
           final a = state.feed[i];
-          return ActivityCard(
-            activity: a,
-            distanceKm: state.distanceFrom(a),
-            onTap: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => ActivityDetailPage(activityId: a.id)),
-              );
-              // 详情页里可能报了名/取消了，回来后刷新一次，避免卡片数字是旧的
-              await state.loadFeed();
-            },
+          return StaggeredIn(
+            index: i,
+            child: ActivityCard(
+              activity: a,
+              distanceKm: state.distanceFrom(a),
+              onTap: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => ActivityDetailPage(activityId: a.id)),
+                );
+                // 详情页里可能报了名/取消了，回来后刷新一次，避免卡片数字是旧的
+                await state.loadFeed();
+              },
+            ),
           );
         },
       ),

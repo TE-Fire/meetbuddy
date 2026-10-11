@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'ui.dart';
+
 /// 分类的视觉映射。
 ///
 /// 刻意不加载封面图：mock 模式必须能离线跑，真机演示时也不该因为图挂了露出白块。
@@ -70,8 +72,24 @@ class ActivityCover extends StatelessWidget {
 
   Widget _placeholder(CategoryVisual visual) => DecoratedBox(
         decoration: BoxDecoration(gradient: visual.gradient),
-        child: Center(
-          child: Text(visual.emoji, style: TextStyle(fontSize: height * 0.36)),
+        child: Stack(
+          children: <Widget>[
+            Positioned(
+              right: -height * 0.25,
+              top: -height * 0.25,
+              child: Blob(size: height * 0.7, color: Colors.white.withValues(alpha: 0.16)),
+            ),
+            Positioned(
+              left: -height * 0.2,
+              bottom: -height * 0.3,
+              child: Blob(size: height * 0.6, color: Colors.white.withValues(alpha: 0.12)),
+            ),
+            Center(
+              // 用图标不用 emoji：CanvasKit 的 emoji 回退字体走 gstatic 按需下载，
+              // 国内网络下会渲染成方框；MaterialIcons 是打包自带的，永远可靠。
+              child: Icon(visual.icon, size: height * 0.32, color: Colors.white),
+            ),
+          ],
         ),
       );
 }
@@ -94,20 +112,34 @@ class CategoryChip extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: Material(
-        color: selected ? scheme.primary : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+      child: Semantics(
+        button: true,
+        selected: selected,
+        child: GestureDetector(
           onTap: onTap,
-          child: Padding(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+            decoration: BoxDecoration(
+              color: selected ? scheme.primary : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: selected
+                  ? <BoxShadow>[
+                      BoxShadow(
+                        color: scheme.primary.withValues(alpha: 0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 14,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
+                fontSize: 13.5,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? scheme.onPrimary : const Color(0xFF5A6172),
               ),
             ),
           ),

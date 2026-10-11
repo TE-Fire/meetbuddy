@@ -2,66 +2,93 @@ import 'package:flutter/material.dart';
 
 import '../model/activity.dart';
 import 'category_visual.dart';
+import 'ui.dart';
 
-/// 活动流卡片。
+/// 活动流卡片。白卡弥散阴影 + 按压缩放；封面带 Hero，进详情无缝放大。
 class ActivityCard extends StatelessWidget {
-  const ActivityCard({super.key, required this.activity, this.distanceKm, this.onTap});
+  const ActivityCard({
+    super.key,
+    required this.activity,
+    this.distanceKm,
+    this.onTap,
+    this.hero = true,
+  });
 
   final Activity activity;
   final double? distanceKm;
   final VoidCallback? onTap;
 
+  /// Hero 默认开。同屏可能出现同一活动id 的页面（如"我的"两个 Tab）要关掉，
+  /// 否则同 tag 的两个 Hero 会让转场动画抛异常。
+  final bool hero;
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              ActivityCover(category: activity.category, coverUrl: activity.coverUrl),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      activity.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, height: 1.3),
+    final cover = ActivityCover(
+      category: activity.category,
+      coverUrl: activity.coverUrl,
+      width: 86,
+      height: 86,
+      radius: 16,
+    );
+
+    return PressableScale(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: AppBrand.card,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            hero
+                ? Hero(tag: 'activity-cover-${activity.id}', child: cover)
+                : cover,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    activity.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w800,
+                      height: 1.3,
+                      color: AppBrand.ink,
                     ),
-                    const SizedBox(height: 6),
-                    _MetaRow(icon: Icons.schedule, text: _timeText(activity.startTime)),
-                    const SizedBox(height: 4),
-                    _MetaRow(
-                      icon: Icons.place_outlined,
-                      text: distanceKm == null
-                          ? activity.address
-                          : '${activity.address} · 距你 ${_km(distanceKm!)}',
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: <Widget>[
-                        _StatusPill(activity: activity),
-                        const Spacer(),
-                        Icon(Icons.group_outlined, size: 15, color: scheme.outline),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${activity.currentParticipants}/${activity.maxParticipants}',
-                          style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 6),
+                  _MetaRow(icon: Icons.schedule_rounded, text: _timeText(activity.startTime)),
+                  const SizedBox(height: 4),
+                  _MetaRow(
+                    icon: Icons.place_rounded,
+                    text: distanceKm == null
+                        ? activity.address
+                        : '${activity.address} · 距你 ${_km(distanceKm!)}',
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: <Widget>[
+                      _CategoryPill(activity: activity),
+                      const SizedBox(width: 8),
+                      _StatusLabel(activity: activity),
+                      const Spacer(),
+                      _Capacity(
+                        current: activity.currentParticipants,
+                        max: activity.maxParticipants,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -93,17 +120,16 @@ class _MetaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Row(
       children: <Widget>[
-        Icon(icon, size: 15, color: scheme.outline),
+        Icon(icon, size: 14, color: AppBrand.muted),
         const SizedBox(width: 4),
         Expanded(
           child: Text(
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
+            style: const TextStyle(fontSize: 12.5, color: Color(0xFF5A6172)),
           ),
         ),
       ],
@@ -111,42 +137,100 @@ class _MetaRow extends StatelessWidget {
   }
 }
 
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.activity});
+class _CategoryPill extends StatelessWidget {
+  const _CategoryPill({required this.activity});
 
   final Activity activity;
 
   @override
   Widget build(BuildContext context) {
     final visual = CategoryVisual.of(activity.category);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: visual.color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        activity.category,
+        style: TextStyle(fontSize: 12, color: visual.color, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+}
+
+class _StatusLabel extends StatelessWidget {
+  const _StatusLabel({required this.activity});
+
+  final Activity activity;
+
+  static Color _color(String status) => switch (status) {
+        'OPEN' => const Color(0xFF22A45D),
+        'FULL' => const Color(0xFFB26A00),
+        'CANCELLED' => const Color(0xFFE5484D),
+        _ => AppBrand.muted,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final c = _color(activity.status);
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: visual.color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Text(
-            activity.category,
-            style: TextStyle(fontSize: 12, color: visual.color, fontWeight: FontWeight.w600),
-          ),
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: c),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 4),
         Text(
           activity.statusLabel,
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: switch (activity.status) {
-              'OPEN' => const Color(0xFF1E8E3E),
-              'FULL' => const Color(0xFFB26A00),
-              'CANCELLED' => const Color(0xFFB3261E),
-              _ => Theme.of(context).colorScheme.outline,
-            },
-          ),
+          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: c),
         ),
       ],
+    );
+  }
+}
+
+/// 名额徽标。数字变化时用 AnimatedSwitcher 做一个轻快的滑动淡入。
+class _Capacity extends StatelessWidget {
+  const _Capacity({required this.current, required this.max});
+
+  final int current;
+  final int max;
+
+  @override
+  Widget build(BuildContext context) {
+    final full = current >= max;
+    final color = full ? const Color(0xFFB26A00) : AppBrand.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: full ? const Color(0xFFFFF3E0) : AppBrand.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        transitionBuilder: (child, anim) => FadeTransition(
+          opacity: anim,
+          child: SlideTransition(
+            position: Tween(begin: const Offset(0, 0.5), end: Offset.zero).animate(anim),
+            child: child,
+          ),
+        ),
+        child: Row(
+          key: ValueKey<int>(current),
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(Icons.group_rounded, size: 13, color: color),
+            const SizedBox(width: 3),
+            Text(
+              '$current/$max',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

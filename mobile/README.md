@@ -129,11 +129,34 @@ mock 不做成"随便返回点数据"，否则一切数据源就露馅。以下�
 1. **「我的」页运行时崩溃**——`ChatRoomPage.dispose()` 里用了 `context`，点返回键退出群聊即触发。根因与修法见「踩过的坑」最后一条。
 2. **验收脚本点不到 AppBar 上的「退出登录」**——不是应用的问题：按钮语义节点中心 y≈28，脚本"低于 70 视为被 AppBar 遮住"的守卫把它当成屏外元素，无限滚动到超时。已在脚本里给 AppBar 目标放开阈值（`{ minY: 6 }`）。这条写下来是为了下次排查时先分清"应用坏了"还是"脚本点不到"。
 
+## 视觉与动效规范（2026-10-11 重构）
+
+UI 按"小红书/即刻"式的年轻化方向整体重构过一轮，基元全部收敛在 `lib/widget/ui.dart`，页面里不允许散落手写 `Color(0x...)` 与 `BoxShadow`：
+
+| 基元 | 用途 |
+|---|---|
+| `AppBrand` | 品牌色（靛蓝 `#5B7FFF` → 紫 `#8E5CFF` 渐变）、ink/muted 文字色、卡片弥散阴影 `card`、品牌投影 `glow` |
+| `PressableScale` | 按压缩放反馈（0.97），可点卡片统一包它 |
+| `StaggeredIn` | 列表按 index 逐个延迟入场（淡入 + 上浮），用 Interval 曲线实现延迟，不用 Timer |
+| `PrimaryButton` | 渐变主按钮，禁用整体变灰、busy 转圈且高度不跳；自带 `role=button` 语义 |
+| `SkeletonBox` / `SkeletonList` | 骨架屏脉冲，替代首屏转圈 |
+| `SectionHeader` | 渐变竖条 + 加粗文字的小节标题 |
+| `Blob` | 渐变卡与登录页的装饰圆斑 |
+
+动效约定：页面转场是全局的淡入 + 轻微上滑 + 缩放（`app.dart` 的 `_SlideFadeBuilder`，所有 `MaterialPageRoute` 自动生效）；新聊天气泡淡入上浮；名额徽标数字变化走 `AnimatedSwitcher`；底部导航是自绘胶囊 Dock（选中项品牌色药丸底，FAB 出入场带缩放过渡）。全部用 Flutter 内置能力，**零新增依赖**。
+
+两条坑记录：
+
+- 自绘可点控件（PrimaryButton、底部导航、FAB、模式切换）必须显式包 `Semantics(button: true)`，否则浏览器语义树里没有 `role=button`，自动化脚本与无障碍都定位不到。
+- `ActivityCard` 的 Hero 默认开；"我的"页两个 Tab 可能同屏出现同 id 活动，会撞 Hero tag 抛异常，那里必须传 `hero: false`。
+- **UI 里不要用 emoji 当图标**（2026-10-11 实测）：CanvasKit 渲染 emoji 要从 gstatic 按需下载 Noto Color Emoji，国内网络下拉不到就渲染成方框（同一页面中文正常，因为 CJK 回退走了别的通道）。分类封面、logo 这类自绘元素一律用 `CategoryVisual.icon` / Material Icons——打包自带、还会被 tree-shake，零网络依赖。用户在聊天里手打的 emoji 仍可能显示方框，属于可接受限制。
+
 ## 踩过的坑
 
 - **Web 上 `dart:io` 的 `WebSocket` 不存在**，必须用 `web_socket_channel`；浏览器握手也带不了自定义 Header，所以令牌只能放查询串（`/ws?token=`），这是 `docs/03` 定 `/ws?token=` 而不是 Header 的原因。
 - **`@Min`/`@Max` 管不了 `double`** 那条在后端，但前端同源：半径滑块取值必须落在 `[0.5, 500]`，越界会被后端 `1001` 打回。
-- **`flutter build web` 默认从 gstatic 拉 CanvasKit**，国内网络下会白屏。本项目的产物自带 `build/web/canvaskit/`，用本地静态服务打开即可（见下）。
+- **`flutter build web` 默认从 gstatic 拉 CanvasKit**，国内网络下会白屏。本项目用 `flutter build web --release --no-web-resources-cdn` 构建，`canvaskit/` 从本地产物加载。
+- **字体也必须自带**（2026-10-11 实测）：不声明字体时引擎按需从 gstatic 拉 Roboto / Noto 回退字体，时通时断，失败时整页文字/emoji 变方框甚至启动失败。`assets/fonts/` 里打包了 Roboto（SDK 自带，Apache 2.0）+ NotoSansSC 可变字体（OFL，17MB，jsdelivr 镜像拉的），pubspec 声明 + `ThemeData(fontFamily: 'NotoSansSC')`，运行时零外网请求。粗体走合成加粗（可变字体默认实例注册，不追求真实字重）。
 - **`dispose()` 里不能用 `context`**（2026-10-11 实测踩到）。卸载顺序是 `Element.unmount()` 先、`state.dispose()` 后，前者已经把 `_widget` 和 `_inheritedElements` 置空、状态改成 `defunct`。此时 `context.read<T>()` 会走到 provider 的
   `throw ProviderNotFoundException(T, context.widget.runtimeType)`，
   而 defunct Element 的 `Element.widget` 是 `_widget!` —— release 包里没有那句"Looking up a deactivated widget's ancestor is unsafe"的 assert 提示，只留下 `Null check operator used on a null value`，堆栈指向 `main.dart.js` 里的压缩帧（帧名 `Element.widget` 的 getter），极难反查。

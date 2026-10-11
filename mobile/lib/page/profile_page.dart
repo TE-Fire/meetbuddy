@@ -8,6 +8,7 @@ import '../state/activity_state.dart';
 import '../state/session_state.dart';
 import '../widget/activity_card.dart';
 import '../widget/state_views.dart';
+import '../widget/ui.dart';
 import 'activity_detail_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -83,73 +84,112 @@ class _ProfilePageState extends State<ProfilePage> {
   /// `me` 由 build() 判空后传进来，这里不再做第二次 `!`——
   /// headerSliverBuilder 是延迟调用的闭包，多一个断言点就多一个崩溃面。
   Widget _header(BuildContext context, User me, bool usingMock) {
-    final scheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[scheme.primary, scheme.primary.withValues(alpha: 0.75)],
-        ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppBrand.glow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          decoration: const BoxDecoration(gradient: AppBrand.brand),
+          padding: const EdgeInsets.all(20),
+          child: Stack(
             children: <Widget>[
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: Colors.white.withValues(alpha: 0.22),
-                child: Text(
-                  me.nickname.characters.first,
-                  style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.w700),
-                ),
+              Positioned(
+                right: -40,
+                top: -46,
+                child: Blob(size: 130, color: Colors.white.withValues(alpha: 0.14)),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(me.nickname,
-                        style: const TextStyle(fontSize: 19, color: Colors.white, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 4),
-                    Text(
-                      me.phone.length == 11 ? '${me.phone.substring(0, 3)}****${me.phone.substring(7)}' : me.phone,
-                      style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.85)),
-                    ),
-                  ],
-                ),
+              Positioned(
+                left: -30,
+                bottom: -56,
+                child: Blob(size: 140, color: Colors.white.withValues(alpha: 0.10)),
               ),
               Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text('${me.creditScore}',
-                      style: const TextStyle(fontSize: 26, color: Colors.white, fontWeight: FontWeight.w800)),
-                  Text('信用分', style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.85))),
+                  Row(
+                    children: <Widget>[
+                      // 白色描边头像：内层半透明露出渐变底，字才看得清
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.25),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 2),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          me.nickname.characters.first,
+                          style: const TextStyle(
+                              fontSize: 22, color: Colors.white, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(me.nickname,
+                                style: const TextStyle(
+                                    fontSize: 19, color: Colors.white, fontWeight: FontWeight.w800)),
+                            const SizedBox(height: 4),
+                            Text(
+                              me.phone.length == 11
+                                  ? '${me.phone.substring(0, 3)}****${me.phone.substring(7)}'
+                                  : me.phone,
+                              style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.85)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // 信用分玻璃徽章
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: <Widget>[
+                            Text('${me.creditScore}',
+                                style: const TextStyle(
+                                    fontSize: 22, color: Colors.white, fontWeight: FontWeight.w800)),
+                            Text('信用分',
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.white.withValues(alpha: 0.85))),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  if ((me.bio ?? '').isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 14),
+                    Text(me.bio!,
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.white.withValues(alpha: 0.92), height: 1.5)),
+                  ],
+                  const SizedBox(height: 14),
+                  Row(
+                    children: <Widget>[
+                      Icon(usingMock ? Icons.science_outlined : Icons.cloud_done_outlined,
+                          size: 15, color: Colors.white.withValues(alpha: 0.85)),
+                      const SizedBox(width: 6),
+                      Text(
+                        usingMock ? '数据源：内存假数据（USE_MOCK）' : '数据源：已连接本地后端',
+                        style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.85)),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ],
           ),
-          if ((me.bio ?? '').isNotEmpty) ...<Widget>[
-            const SizedBox(height: 14),
-            Text(me.bio!, style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.92), height: 1.5)),
-          ],
-          const SizedBox(height: 14),
-          Row(
-            children: <Widget>[
-              Icon(usingMock ? Icons.science_outlined : Icons.cloud_done_outlined,
-                  size: 15, color: Colors.white.withValues(alpha: 0.85)),
-              const SizedBox(width: 6),
-              Text(
-                usingMock ? '数据源：内存假数据（USE_MOCK）' : '数据源：已连接本地后端',
-                style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.85)),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -166,6 +206,8 @@ class _ProfilePageState extends State<ProfilePage> {
         separatorBuilder: (_, _) => const SizedBox(height: 10),
         itemBuilder: (context, i) => ActivityCard(
           activity: items[i],
+          // "我的"两个 Tab 可能同屏各有一份同 id 活动，Hero 会撞 tag
+          hero: false,
           onTap: () async {
             await Navigator.of(context).push(
               MaterialPageRoute<void>(builder: (_) => ActivityDetailPage(activityId: items[i].id)),

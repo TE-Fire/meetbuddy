@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../model/chat_message.dart';
+import 'ui.dart';
 
-/// 聊天气泡。系统消息走中间一条灰字，不画气泡。
+/// 聊天气泡。系统消息走中间一枚灰色药丸，不画气泡。
+/// 自己的消息用品牌渐变，新消息带一个轻快的淡入上浮。
 class ChatBubble extends StatelessWidget {
   const ChatBubble({
     super.key,
@@ -23,19 +25,51 @@ class ChatBubble extends StatelessWidget {
 
     if (message.isSystem) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 40),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 40),
         child: Center(
-          child: Text(
-            message.content,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: scheme.outline, height: 1.5),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE9ECF5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              message.content,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), height: 1.5),
+            ),
           ),
         ),
       );
     }
 
-    final bubbleColor = mine ? scheme.primary : Colors.white;
-    final textColor = mine ? scheme.onPrimary : scheme.onSurface;
+    final bubble = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: mine ? AppBrand.brand : null,
+        color: mine ? null : Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(16),
+          topRight: const Radius.circular(16),
+          bottomLeft: Radius.circular(mine ? 16 : 4),
+          bottomRight: Radius.circular(mine ? 4 : 16),
+        ),
+        border: mine ? null : Border.all(color: AppBrand.line),
+        boxShadow: mine
+            ? <BoxShadow>[
+                BoxShadow(
+                  color: AppBrand.primary.withValues(alpha: 0.28),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: Text(
+        message.content,
+        style: TextStyle(fontSize: 14.5, color: mine ? Colors.white : AppBrand.ink, height: 1.45),
+      ),
+    );
 
     return Padding(
       padding: EdgeInsets.only(
@@ -44,52 +78,43 @@ class ChatBubble extends StatelessWidget {
         top: 5,
         bottom: 5,
       ),
-      child: Column(
-        crossAxisAlignment: mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: <Widget>[
-          if (!mine && showSender)
-            Padding(
-              padding: const EdgeInsets.only(left: 4, bottom: 4),
-              child: Text(
-                message.senderNickname ?? '匿名用户',
-                style: TextStyle(fontSize: 12, color: scheme.outline),
-              ),
-            ),
-          Row(
-            mainAxisAlignment: mine ? MainAxisAlignment.end : MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: <Widget>[
-              if (mine && pending)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6, bottom: 4),
-                  child: SizedBox(
-                    width: 12,
-                    height: 12,
-                    child: CircularProgressIndicator(strokeWidth: 1.6, color: scheme.outline),
-                  ),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+        builder: (context, t, child) => Opacity(
+          opacity: t,
+          child: Transform.translate(offset: Offset(0, 8 * (1 - t)), child: child),
+        ),
+        child: Column(
+          crossAxisAlignment: mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: <Widget>[
+            if (!mine && showSender)
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 4),
+                child: Text(
+                  message.senderNickname ?? '匿名用户',
+                  style: const TextStyle(fontSize: 12, color: AppBrand.muted),
                 ),
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: bubbleColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(14),
-                      topRight: const Radius.circular(14),
-                      bottomLeft: Radius.circular(mine ? 14 : 4),
-                      bottomRight: Radius.circular(mine ? 4 : 14),
+              ),
+            Row(
+              mainAxisAlignment: mine ? MainAxisAlignment.end : MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                if (mine && pending)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6, bottom: 4),
+                    child: SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 1.6, color: scheme.outline),
                     ),
-                    border: mine ? null : Border.all(color: scheme.outlineVariant),
                   ),
-                  child: Text(
-                    message.content,
-                    style: TextStyle(fontSize: 15, color: textColor, height: 1.4),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+                Flexible(child: bubble),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

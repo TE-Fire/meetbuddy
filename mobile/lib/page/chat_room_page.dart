@@ -5,6 +5,7 @@ import '../state/chat_state.dart';
 import '../state/session_state.dart';
 import '../widget/chat_bubble.dart';
 import '../widget/state_views.dart';
+import '../widget/ui.dart';
 
 /// 群聊页。
 ///
@@ -151,12 +152,15 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   Widget _readonlyBanner(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
-      width: double.infinity,
-      color: scheme.errorContainer.withValues(alpha: 0.6),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: scheme.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         children: <Widget>[
-          Icon(Icons.lock_outline, size: 16, color: scheme.error),
+          Icon(Icons.lock_outline_rounded, size: 16, color: scheme.error),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -170,13 +174,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   Widget _inputBar(BuildContext context, bool readonly) {
-    final scheme = Theme.of(context).colorScheme;
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+        margin: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+        padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: scheme.outlineVariant)),
+          borderRadius: BorderRadius.circular(26),
+          boxShadow: AppBrand.card,
         ),
         child: Row(
           children: <Widget>[
@@ -188,15 +193,32 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 onSubmitted: (_) => readonly ? null : _send(),
                 decoration: InputDecoration(
                   hintText: readonly ? '群聊已只读' : '说点什么…',
+                  filled: false,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            IconButton.filled(
-              onPressed: readonly ? null : _send,
-              icon: const Icon(Icons.send_rounded, size: 20),
+            Semantics(
+              button: true,
+              child: GestureDetector(
+                onTap: readonly ? null : _send,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: readonly ? null : AppBrand.brand,
+                    color: readonly ? const Color(0xFFC7CBDB) : null,
+                    shape: BoxShape.circle,
+                    boxShadow: readonly ? null : AppBrand.glow,
+                  ),
+                  child: const Icon(Icons.send_rounded, size: 19, color: Colors.white),
+                ),
+              ),
             ),
           ],
         ),

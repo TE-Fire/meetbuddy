@@ -7,6 +7,7 @@ import '../app_scope.dart';
 import '../config/env.dart';
 import '../model/api_exception.dart';
 import '../state/session_state.dart';
+import '../widget/ui.dart';
 
 enum _Mode { password, sms, register }
 
@@ -111,164 +112,250 @@ class _LoginPageState extends State<LoginPage> {
     final needsPassword = _mode != _Mode.sms;
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  const SizedBox(height: 8),
-                  Row(
+      body: Stack(
+        children: <Widget>[
+          const Positioned.fill(child: ColoredBox(color: AppBrand.bg)),
+          Positioned(
+            top: -120,
+            right: -80,
+            child: Blob(size: 280, color: AppBrand.primary.withValues(alpha: 0.14)),
+          ),
+          Positioned(
+            top: 130,
+            left: -110,
+            child: Blob(size: 260, color: AppBrand.secondary.withValues(alpha: 0.10)),
+          ),
+          Positioned(
+            bottom: -140,
+            right: -60,
+            child: Blob(size: 300, color: AppBrand.hot.withValues(alpha: 0.08)),
+          ),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: scheme.primary,
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: const Center(child: Text('🤝', style: TextStyle(fontSize: 26))),
+                      StaggeredIn(
+                        index: 0,
+                        child: _logo(),
                       ),
-                      const SizedBox(width: 14),
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text('搭子', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
-                          Text('同城组局，找个搭子', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
-                        ],
+                      const SizedBox(height: 28),
+                      StaggeredIn(
+                        index: 1,
+                        child: _modeSwitcher(),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 36),
-
-                  SegmentedButton<_Mode>(
-                    segments: const <ButtonSegment<_Mode>>[
-                      ButtonSegment<_Mode>(value: _Mode.password, label: Text('密码登录')),
-                      ButtonSegment<_Mode>(value: _Mode.sms, label: Text('验证码')),
-                      ButtonSegment<_Mode>(value: _Mode.register, label: Text('注册')),
-                    ],
-                    selected: <_Mode>{_mode},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (s) => setState(() {
-                      _mode = s.first;
-                      _error = null;
-                    }),
-                  ),
-                  const SizedBox(height: 22),
-
-                  TextField(
-                    controller: _phone,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: '手机号',
-                      prefixIcon: Icon(Icons.phone_iphone),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  if (_mode == _Mode.register) ...<Widget>[
-                    TextField(
-                      controller: _nickname,
-                      decoration: const InputDecoration(
-                        labelText: '昵称',
-                        prefixIcon: Icon(Icons.badge_outlined),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                  ],
-
-                  if (needsPassword)
-                    TextField(
-                      controller: _password,
-                      obscureText: true,
-                      onSubmitted: (_) => _submit(),
-                      decoration: const InputDecoration(
-                        labelText: '密码',
-                        prefixIcon: Icon(Icons.lock_outline),
-                      ),
-                    ),
-
-                  if (needsCode)
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: TextField(
-                            controller: _code,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: '验证码',
-                              prefixIcon: Icon(Icons.sms_outlined),
+                      const SizedBox(height: 20),
+                      StaggeredIn(
+                        index: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            TextField(
+                              controller: _phone,
+                              keyboardType: TextInputType.phone,
+                              decoration: const InputDecoration(
+                                labelText: '手机号',
+                                prefixIcon: Icon(Icons.phone_iphone_rounded),
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 14),
+                            if (_mode == _Mode.register) ...<Widget>[
+                              TextField(
+                                controller: _nickname,
+                                decoration: const InputDecoration(
+                                  labelText: '昵称',
+                                  prefixIcon: Icon(Icons.badge_outlined),
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                            ],
+                            if (needsPassword)
+                              TextField(
+                                controller: _password,
+                                obscureText: true,
+                                onSubmitted: (_) => _submit(),
+                                decoration: const InputDecoration(
+                                  labelText: '密码',
+                                  prefixIcon: Icon(Icons.lock_outline_rounded),
+                                ),
+                              ),
+                            if (needsCode)
+                              Row(
+                                children: <Widget>[
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _code,
+                                      keyboardType: TextInputType.number,
+                                      decoration: const InputDecoration(
+                                        labelText: '验证码',
+                                        prefixIcon: Icon(Icons.sms_outlined),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  SizedBox(
+                                    height: 52,
+                                    child: OutlinedButton(
+                                      onPressed: _countdown > 0 ? null : _sendCode,
+                                      child: Text(_countdown > 0 ? '${_countdown}s' : '获取验证码'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            AnimatedSize(
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeOut,
+                              alignment: Alignment.topCenter,
+                              child: _error == null
+                                  ? const SizedBox(height: 14)
+                                  : Container(
+                                      margin: const EdgeInsets.only(top: 14),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: scheme.error.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        children: <Widget>[
+                                          Icon(Icons.error_outline_rounded, size: 18, color: scheme.error),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              _error!,
+                                              style: TextStyle(fontSize: 13, color: scheme.error),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(height: 16),
+                            PrimaryButton(
+                              text: _mode == _Mode.register ? '注册并登录' : '登录',
+                              onPressed: session.busy ? null : _submit,
+                              busy: session.busy,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          height: 56,
-                          child: OutlinedButton(
-                            onPressed: _countdown > 0 ? null : _sendCode,
-                            child: Text(_countdown > 0 ? '${_countdown}s' : '获取验证码'),
-                          ),
+                      ),
+                      const SizedBox(height: 24),
+                      StaggeredIn(
+                        index: 3,
+                        child: Column(
+                          children: <Widget>[
+                            Center(
+                              child: Text(
+                                scope.usingMock ? '数据源：内存假数据' : '数据源：${Env.apiBase}',
+                                style: const TextStyle(fontSize: 12, color: AppBrand.muted),
+                              ),
+                            ),
+                            if (scope.usingMock)
+                              const Padding(
+                                padding: EdgeInsets.only(top: 6),
+                                child: Center(
+                                  child: Text(
+                                    '演示账号 13800000001 / 123456，验证码固定 123456',
+                                    style: TextStyle(fontSize: 12, color: AppBrand.muted),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                      ],
-                    ),
-
-                  if (_error != null) ...<Widget>[
-                    const SizedBox(height: 14),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: scheme.errorContainer.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Row(
-                        children: <Widget>[
-                          Icon(Icons.error_outline, size: 18, color: scheme.error),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(_error!, style: TextStyle(fontSize: 13, color: scheme.error)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 22),
-                  FilledButton(
-                    onPressed: session.busy ? null : _submit,
-                    child: session.busy
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
-                          )
-                        : Text(_mode == _Mode.register ? '注册并登录' : '登录'),
+                    ],
                   ),
-
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Text(
-                      scope.usingMock ? '数据源：内存假数据' : '数据源：${Env.apiBase}',
-                      style: TextStyle(fontSize: 12, color: scheme.outline),
-                    ),
-                  ),
-                  if (scope.usingMock)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Center(
-                        child: Text(
-                          '演示账号 13800000001 / 123456，验证码固定 123456',
-                          style: TextStyle(fontSize: 12, color: scheme.outline),
-                        ),
-                      ),
-                    ),
-                ],
+                ),
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _logo() {
+    return Row(
+      children: <Widget>[
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: AppBrand.brand,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: AppBrand.glow,
+          ),
+          child: const Center(child: Icon(Icons.handshake_rounded, size: 30, color: Colors.white)),
         ),
+        const SizedBox(width: 14),
+        const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              '搭子',
+              style: TextStyle(fontSize: 27, fontWeight: FontWeight.w800, color: AppBrand.ink, letterSpacing: -0.5),
+            ),
+            Text('同城组局，找个搭子', style: TextStyle(fontSize: 13, color: AppBrand.muted)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// 自定义分段切换。滑动的白色滑块替代 SegmentedButton 的方盒感。
+  Widget _modeSwitcher() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE9ECF6),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: <Widget>[
+          for (final m in _Mode.values)
+            Expanded(
+              child: Semantics(
+                button: true,
+                selected: _mode == m,
+                child: GestureDetector(
+                  onTap: () => setState(() {
+                    _mode = m;
+                    _error = null;
+                  }),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOut,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    decoration: BoxDecoration(
+                      color: _mode == m ? Colors.white : Colors.transparent,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: _mode == m
+                          ? const <BoxShadow>[BoxShadow(color: Color(0x1E1B2B4D), blurRadius: 8, offset: Offset(0, 2))]
+                          : null,
+                    ),
+                    child: Center(
+                      child: AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 200),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: _mode == m ? FontWeight.w800 : FontWeight.w500,
+                          color: _mode == m ? AppBrand.ink : AppBrand.muted,
+                        ),
+                        child: Text(switch (m) {
+                          _Mode.password => '密码登录',
+                          _Mode.sms => '验证码',
+                          _Mode.register => '注册',
+                        }),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

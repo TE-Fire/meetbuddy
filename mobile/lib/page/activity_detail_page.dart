@@ -7,6 +7,7 @@ import '../model/api_exception.dart';
 import '../state/activity_state.dart';
 import '../widget/category_visual.dart';
 import '../widget/state_views.dart';
+import '../widget/ui.dart';
 import 'chat_room_page.dart';
 
 class ActivityDetailPage extends StatefulWidget {
@@ -104,7 +105,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
 
   Widget _body(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const _DetailSkeleton();
     }
     if (_error != null) {
       return ErrorView(message: _error!, onRetry: _load);
@@ -116,18 +117,52 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: <Widget>[
+        // Hero 封面：从列表卡片无缝放大进场
         Container(
-          height: 160,
-          margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          decoration: BoxDecoration(gradient: visual.gradient, borderRadius: BorderRadius.circular(18)),
-          child: Center(child: Text(visual.emoji, style: const TextStyle(fontSize: 56))),
+          margin: const EdgeInsets.fromLTRB(16, 8, 16, 18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: AppBrand.card,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: Hero(
+              tag: 'activity-cover-${a.id}',
+              child: SizedBox(
+                height: 172,
+                child: Stack(
+                  children: <Widget>[
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(gradient: visual.gradient),
+                      ),
+                    ),
+                    Positioned(
+                      right: -34,
+                      top: -34,
+                      child: Blob(size: 140, color: Colors.white.withValues(alpha: 0.16)),
+                    ),
+                    Positioned(
+                      left: -24,
+                      bottom: -44,
+                      child: Blob(size: 160, color: Colors.white.withValues(alpha: 0.12)),
+                    ),
+                    Center(child: Icon(visual.icon, size: 64, color: Colors.white)),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(a.title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, height: 1.3)),
+              Text(
+                a.title,
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, height: 1.3, color: AppBrand.ink),
+              ),
               const SizedBox(height: 10),
               Row(
                 children: <Widget>[
@@ -135,41 +170,44 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: visual.color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(a.category, style: TextStyle(fontSize: 12.5, color: visual.color, fontWeight: FontWeight.w600)),
+                    child: Text(a.category, style: TextStyle(fontSize: 12.5, color: visual.color, fontWeight: FontWeight.w700)),
                   ),
                   const SizedBox(width: 8),
-                  Text(a.statusLabel, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: scheme.primary)),
+                  Text(
+                    a.statusLabel,
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _statusColor(a.status)),
+                  ),
                   if (a.creditRequired > 0) ...<Widget>[
                     const SizedBox(width: 8),
-                    Text('信用分 ≥ ${a.creditRequired}', style: TextStyle(fontSize: 12.5, color: scheme.outline)),
+                    Text('信用分 ≥ ${a.creditRequired}', style: const TextStyle(fontSize: 12.5, color: AppBrand.muted)),
                   ],
                 ],
               ),
               const SizedBox(height: 18),
-              _InfoTile(icon: Icons.schedule, label: '时间', value: '${_fmt(a.startTime)} — ${_fmt(a.endTime, withDate: false)}'),
-              _InfoTile(icon: Icons.place_outlined, label: '地点', value: a.address),
+              _InfoTile(icon: Icons.schedule_rounded, label: '时间', value: '${_fmt(a.startTime)} — ${_fmt(a.endTime, withDate: false)}'),
+              _InfoTile(icon: Icons.place_rounded, label: '地点', value: a.address),
               _InfoTile(
-                icon: Icons.group_outlined,
+                icon: Icons.group_rounded,
                 label: '名额',
                 value: '${a.currentParticipants}/${a.maxParticipants}'
                     '${a.slotsLeft > 0 ? '（还剩 ${a.slotsLeft} 个）' : '（已满）'}',
               ),
               if (a.tags.isNotEmpty)
-                _InfoTile(icon: Icons.local_offer_outlined, label: '标签', value: a.tags.join(' · ')),
-              const SizedBox(height: 8),
+                _InfoTile(icon: Icons.local_offer_rounded, label: '标签', value: a.tags.join(' · ')),
+              const SizedBox(height: 10),
               const Divider(),
               const SizedBox(height: 16),
 
               if ((a.description ?? '').isNotEmpty) ...<Widget>[
-                const Text('活动介绍', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                const SectionHeader('活动介绍'),
                 const SizedBox(height: 10),
-                Text(a.description!, style: const TextStyle(fontSize: 14.5, height: 1.8, color: Color(0xFF3C4250))),
+                Text(a.description!, style: const TextStyle(fontSize: 14.5, height: 1.8, color: Color(0xFF4A5068))),
                 const SizedBox(height: 20),
               ],
 
-              Text('组织者', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              const SectionHeader('组织者'),
               const SizedBox(height: 10),
               Row(
                 children: <Widget>[
@@ -195,7 +233,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
               ),
               const SizedBox(height: 22),
 
-              Text('已报名 ${a.participants.length} 人', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              SectionHeader('已报名 ${a.participants.length} 人'),
               const SizedBox(height: 12),
               if (a.participants.isEmpty)
                 Text('还没有人报名，你是第一个也说不定', style: TextStyle(fontSize: 13.5, color: scheme.outline))
@@ -250,9 +288,10 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
       buttons.add(
         Expanded(
           flex: 2,
-          child: FilledButton(
+          child: PrimaryButton(
+            text: '报名参加（还差 ${a.slotsLeft} 人）',
             onPressed: _acting ? null : () => _act(() => scope.activity.signUp(a.id), '报名成功，已加入群聊'),
-            child: Text('报名参加（还差 ${a.slotsLeft} 人）'),
+            busy: _acting,
           ),
         ),
       );
@@ -282,20 +321,23 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
       buttons.add(
         Expanded(
           flex: 2,
-          child: FilledButton(
+          child: PrimaryButton(
+            text: a.status == 'FULL' ? '名额已满' : a.statusLabel,
             onPressed: null,
-            child: Text(a.status == 'FULL' ? '名额已满' : a.statusLabel),
           ),
         ),
       );
     }
 
     return SafeArea(
+      top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        margin: const EdgeInsets.fromLTRB(12, 6, 12, 12),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: scheme.outlineVariant)),
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: AppBrand.card,
         ),
         child: Row(
           children: <Widget>[
@@ -327,6 +369,13 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
     await _act(() => context.read<AppScope>().activity.cancelActivity(a.id), '活动已取消，群聊转为只读');
   }
 
+  static Color _statusColor(String status) => switch (status) {
+        'OPEN' => const Color(0xFF22A45D),
+        'FULL' => const Color(0xFFB26A00),
+        'CANCELLED' => const Color(0xFFE5484D),
+        _ => AppBrand.muted,
+      };
+
   static String _fmt(DateTime? t, {bool withDate = true}) {
     if (t == null) {
       return '待定';
@@ -346,21 +395,59 @@ class _InfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          Icon(icon, size: 18, color: scheme.outline),
-          const SizedBox(width: 8),
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppBrand.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 17, color: AppBrand.primary),
+          ),
+          const SizedBox(width: 12),
           SizedBox(
-            width: 40,
-            child: Text(label, style: TextStyle(fontSize: 13.5, color: scheme.outline)),
+            width: 36,
+            child: Text(label, style: const TextStyle(fontSize: 13, color: AppBrand.muted)),
           ),
           Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 14, height: 1.5)),
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14, height: 1.5, fontWeight: FontWeight.w500, color: AppBrand.ink),
+            ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 详情页加载骨架。
+class _DetailSkeleton extends StatelessWidget {
+  const _DetailSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SkeletonBox(height: 172, radius: 22),
+          SizedBox(height: 18),
+          SkeletonBox(width: 200, height: 22, radius: 8),
+          SizedBox(height: 14),
+          SkeletonBox(width: 130, height: 14, radius: 6),
+          SizedBox(height: 22),
+          SkeletonBox(height: 52, radius: 14),
+          SizedBox(height: 10),
+          SkeletonBox(height: 52, radius: 14),
+          SizedBox(height: 10),
+          SkeletonBox(height: 52, radius: 14),
         ],
       ),
     );
