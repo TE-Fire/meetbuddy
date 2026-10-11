@@ -1,0 +1,282 @@
+/**
+ * 全局样式 = 设计令牌层。
+ * 与 Flutter 端 AppBrand 一一对应：天空蓝 #38B2F2 / 草地绿 #C4ECA6 / 黑胶囊 #171A1D。
+ * 页面里直接用这些类，不要再手写颜色值。
+ */
+page {
+  /* —— 色板 —— */
+  --sky-top: #DDF0FC;
+  --sky-bottom: #F4FAFF;
+  --brand: #38B2F2;
+  --brand-deep: #189BE0;
+  --brand-soft: #E1F4FE;
+  --grass: #C4ECA6;
+  --grass-light: #D3F2BC;
+  --grass-deep: #7CC96B;
+  --grass-soft: #EFF9E8;
+  --grass-ink: #4E8F3C;
+  --route: #4FC3F7;
+  --black: #171A1D;
+  --ink: #182028;
+  --ink-2: #3C4A56;
+  --muted: #93A1AD;
+  --line: #E4EEF6;
+  --hot: #FF5B7A;
+  --warm-bg: #FFF3E8;
+  --warm-ink: #C77A2A;
+  --field-bg: #F3F8FC;
+
+  /* —— 圆角 / 阴影 —— */
+  --r-lg: 52rpx;
+  --shadow-card: 0 28rpx 68rpx rgba(31, 102, 150, 0.13);
+  --shadow-sm: 0 12rpx 36rpx rgba(31, 102, 150, 0.10);
+  --shadow-ink: 0 20rpx 44rpx rgba(23, 26, 29, 0.20);
+  --shadow-glow: 0 18rpx 40rpx rgba(56, 178, 242, 0.35);
+
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'HarmonyOS Sans SC',
+    'Microsoft YaHei', sans-serif;
+  color: var(--ink);
+  font-size: 28rpx;
+  background: var(--sky-bottom);
+}
+
+/* ============ 天空底 ============ */
+.sky {
+  min-height: 100vh;
+  background:
+    radial-gradient(560rpx 320rpx at 92% -4%, rgba(196, 236, 166, 0.5) 0%, rgba(196, 236, 166, 0) 62%),
+    linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 36%, #ffffff 100%);
+  box-sizing: border-box;
+}
+
+/* ============ 卡片 ============ */
+.card {
+  background: #fff;
+  border-radius: 40rpx;
+  box-shadow: var(--shadow-card);
+}
+.card-sm {
+  background: #fff;
+  border-radius: 32rpx;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ============ 黑胶囊主按钮 ============ */
+.btn-black {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 104rpx;
+  border-radius: 999rpx;
+  background: var(--black);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+  box-shadow: var(--shadow-ink);
+}
+.btn-black.disabled {
+  background: #c7d0d8;
+  box-shadow: none;
+}
+.btn-black::after {
+  border: none;
+}
+.btn-ghost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  height: 104rpx;
+  border-radius: 999rpx;
+  background: #fff;
+  color: var(--ink);
+  font-size: 31rpx;
+  font-weight: 700;
+  border: 3rpx solid var(--line);
+}
+.btn-ghost::after {
+  border: none;
+}
+
+/* ============ 胶囊 chips ============ */
+.chip {
+  flex-shrink: 0;
+  padding: 16rpx 32rpx;
+  border-radius: 999rpx;
+  background: #fff;
+  border: 3rpx solid var(--line);
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--ink-2);
+  line-height: 1.2;
+}
+.chip.on {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: var(--shadow-glow);
+}
+
+/* ============ 软标签 ============ */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 18rpx;
+  border-radius: 16rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+}
+.tag.grass {
+  background: var(--grass-soft);
+  color: var(--grass-ink);
+}
+.tag.warm {
+  background: var(--warm-bg);
+  color: var(--warm-ink);
+}
+.tag.plain {
+  background: #f1f5f8;
+  color: var(--ink-2);
+}
+
+/* ============ 黑色小标签（封面左上角） ============ */
+.ink-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 22rpx;
+  border-radius: 999rpx;
+  background: var(--black);
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ============ 大标题（黑粗体 + 蓝色高亮） ============ */
+.display {
+  font-size: 54rpx;
+  font-weight: 900;
+  line-height: 1.32;
+  letter-spacing: 1rpx;
+  color: var(--ink);
+}
+.display .hl {
+  color: var(--brand);
+}
+.display-sub {
+  margin-top: 14rpx;
+  font-size: 25rpx;
+  color: var(--muted);
+  letter-spacing: 1rpx;
+}
+
+/* ============ 小节标题 ============ */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  font-size: 32rpx;
+  font-weight: 800;
+  color: var(--ink);
+}
+.section-title::before {
+  content: '';
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 6rpx;
+  background: var(--brand);
+}
+
+/* ============ 名额进度条 ============ */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+.progress .bar {
+  flex: 1;
+  height: 14rpx;
+  border-radius: 999rpx;
+  background: #edf4f9;
+  overflow: hidden;
+}
+.progress .bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, var(--brand), #6fd0ff);
+}
+.progress.full .bar i {
+  background: #b26a00;
+}
+.progress .num {
+  font-size: 24rpx;
+  font-weight: 800;
+  color: var(--brand-deep);
+}
+.progress.full .num {
+  color: #b26a00;
+}
+
+/* ============ 表单 ============ */
+.field {
+  background: var(--field-bg);
+  border: 3rpx solid var(--line);
+  border-radius: 28rpx;
+  padding: 0 28rpx;
+  height: 100rpx;
+  box-sizing: border-box;
+}
+.field input,
+.field textarea {
+  width: 100%;
+  height: 100%;
+  font-size: 29rpx;
+  color: var(--ink);
+}
+
+/* ============ 布局助手 ============ */
+.row {
+  display: flex;
+  align-items: center;
+}
+.spacer {
+  flex: 1;
+}
+.ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.empty {
+  padding: 140rpx 64rpx;
+  text-align: center;
+}
+.empty .icon {
+  width: 150rpx;
+  height: 150rpx;
+  margin: 0 auto 30rpx;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60rpx;
+}
+.empty .title {
+  font-size: 31rpx;
+  font-weight: 800;
+  color: var(--ink);
+}
+.empty .hint {
+  margin-top: 14rpx;
+  font-size: 25rpx;
+  color: var(--muted);
+  line-height: 1.6;
+}

@@ -1,0 +1,91 @@
+<view class="sky page">
+  <view class="display">说出想法，<text class="hl">一键组局</text></view>
+  <view class="display-sub">发布后即刻同步给附近的搭子</view>
+
+  <view class="card box">
+    <view class="label">局的名字</view>
+    <view class="field"><input maxlength="30" placeholder="例：国贸剧本杀·硬核本" value="{{title}}" bindinput="onTitle" /></view>
+    <view class="counter">{{title.length}}/30</view>
+  </view>
+
+  <view class="card box">
+    <view class="label">分类</view>
+    <view class="chips-wrap">
+      <view
+        wx:for="{{categories}}"
+        wx:key="*this"
+        class="chip {{category === item ? 'on' : ''}}"
+        data-c="{{item}}"
+        bindtap="pickCategory"
+      >{{item}}</view>
+    </view>
+  </view>
+
+  <view class="card box">
+    <view class="label">时间</view>
+    <view class="time-row">
+      <view class="time-box" bindtap="pickStart">
+        <text class="tl">开始</text>
+        <text class="tv {{startText === '选择时间' ? 'dim' : ''}}">{{startText}}</text>
+      </view>
+      <view class="time-box" bindtap="pickEnd">
+        <text class="tl">结束</text>
+        <text class="tv {{endText === '选择时间' ? 'dim' : ''}}">{{endText}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card box">
+    <view class="label">地点</view>
+    <picker mode="selector" range="{{venueNames}}" value="{{venueIndex}}" bindchange="onVenue">
+      <view class="picker">{{venueNames[venueIndex]}} <text class="caret">▾</text></view>
+    </picker>
+    <view class="field mt"><input placeholder="详细地址（选填）例：4F 星巴克门口集合" value="{{address}}" bindinput="onAddress" /></view>
+  </view>
+
+  <view class="card box">
+    <view class="label">人数与门槛</view>
+    <view class="srow">
+      <text class="slabel">最多 {{maxParticipants}} 人</text>
+      <view class="stepper">
+        <view class="step" data-d="-1" bindtap="onMax" data-min="2" data-max="30">−</view>
+        <text class="snum">{{maxParticipants}}</text>
+        <view class="step" data-d="1" bindtap="onMax" data-min="2" data-max="30">＋</view>
+      </view>
+    </view>
+    <view class="srow">
+      <text class="slabel">信用分门槛 {{creditRequired}}</text>
+      <view class="stepper">
+        <view class="step" data-d="-5" bindtap="onCredit" data-min="0" data-max="100">−</view>
+        <text class="snum">{{creditRequired}}</text>
+        <view class="step" data-d="5" bindtap="onCredit" data-min="0" data-max="100">＋</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card box">
+    <view class="label">标签（可多选）</view>
+    <view class="chips-wrap">
+      <view
+        wx:for="{{tagPool}}"
+        wx:key="*this"
+        class="chip {{tags.indexOf(item) >= 0 ? 'on' : ''}}"
+        data-t="{{item}}"
+        bindtap="toggleTag"
+      >{{item}}</view>
+    </view>
+  </view>
+
+  <view class="card box">
+    <view class="label">活动介绍（选填）</view>
+    <view class="field area">
+      <textarea maxlength="300" placeholder="集合方式、费用、需要带什么，写清楚能少一半的来回问" value="{{desc}}" bindinput="onDesc" />
+    </view>
+  </view>
+
+  <view class="tip">
+    <text>ℹ️ 发布成功会同时建好群聊，你自动是群主；之后别人一报名就进群。</text>
+  </view>
+
+  <view class="btn-black {{submitting ? 'disabled' : ''}}" bindtap="submit">{{submitting ? '发布中…' : '发布组局'}}</view>
+</view>

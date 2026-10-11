@@ -1,0 +1,92 @@
+.page {
+  padding: 24rpx 36rpx 220rpx;
+}
+.conn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12rpx;
+  background: #f1f5f8;
+  border-radius: 999rpx;
+  padding: 12rpx 24rpx;
+  font-size: 23rpx;
+  font-weight: 700;
+  color: var(--muted);
+}
+.conn .dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.conn.on {
+  background: var(--grass-soft);
+  color: var(--grass-ink);
+}
+.conn.on .dot {
+  background: var(--grass-deep);
+}
+
+.group {
+  margin-top: 26rpx;
+  padding: 28rpx 30rpx;
+  display: flex;
+  align-items: center;
+  gap: 26rpx;
+}
+.gava {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 34rpx;
+  background: linear-gradient(150deg, #59bcf5, var(--brand-deep));
+  box-shadow: var(--shadow-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42rpx;
+  flex-shrink: 0;
+}
+.gbody {
+  flex: 1;
+  min-width: 0;
+}
+.gname {
+  font-size: 31rpx;
+  font-weight: 800;
+  color: var(--ink);
+}
+.glast {
+  margin-top: 10rpx;
+  font-size: 25rpx;
+  color: var(--muted);
+}
+.gright {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14rpx;
+  flex-shrink: 0;
+}
+.gtime {
+  font-size: 22rpx;
+  color: var(--muted);
+}
+.gunread {
+  min-width: 36rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  background: var(--hot);
+  color: #fff;
+  font-size: 21rpx;
+  font-weight: 800;
+  text-align: center;
+  box-sizing: border-box;
+}
+.gcount {
+  font-size: 22rpx;
+  color: var(--muted);
+}
+.loading {
+  text-align: center;
+  color: var(--muted);
+  padding-top: 200rpx;
+}

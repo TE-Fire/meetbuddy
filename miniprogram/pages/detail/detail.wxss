@@ -1,0 +1,187 @@
+.page {
+  padding: 24rpx 40rpx 240rpx;
+}
+.hero {
+  display: block;
+  box-shadow: var(--shadow-card);
+  border-radius: 40rpx;
+}
+.head {
+  padding: 30rpx 6rpx 34rpx;
+}
+.head .display {
+  font-size: 44rpx;
+}
+.sub {
+  margin-top: 12rpx;
+  font-size: 25rpx;
+  color: var(--muted);
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+/* 信息卡 */
+.info {
+  padding: 8rpx 36rpx;
+}
+.irow {
+  display: flex;
+  align-items: center;
+  gap: 26rpx;
+  padding: 30rpx 0;
+  border-bottom: 1rpx solid var(--line);
+}
+.irow.last {
+  border-bottom: none;
+}
+.iicon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 26rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  flex-shrink: 0;
+}
+.iicon.sky {
+  background: var(--brand-soft);
+}
+.iicon.grass {
+  background: var(--grass-soft);
+}
+.iicon.warm {
+  background: var(--warm-bg);
+}
+.iicon.plain {
+  background: #f1f5f8;
+}
+.itx {
+  flex: 1;
+  min-width: 0;
+}
+.t1 {
+  font-size: 29rpx;
+  font-weight: 700;
+  color: var(--ink);
+}
+.t2 {
+  margin-top: 6rpx;
+  font-size: 23rpx;
+  color: var(--muted);
+}
+
+.desc {
+  margin: 24rpx 0 40rpx;
+  padding: 36rpx;
+  font-size: 29rpx;
+  line-height: 1.85;
+  color: var(--ink-2);
+}
+
+.section-title {
+  margin: 0 6rpx 24rpx;
+}
+.cap {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--muted);
+  margin-left: 16rpx;
+}
+
+.organizer {
+  padding: 28rpx;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin-bottom: 44rpx;
+}
+.avatar {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 50%;
+  background: linear-gradient(150deg, #59bcf5, var(--brand-deep));
+  color: #fff;
+  font-size: 34rpx;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.none {
+  font-size: 27rpx;
+  color: var(--muted);
+  margin-bottom: 44rpx;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 8rpx 24rpx 8rpx 8rpx;
+  border-radius: 999rpx;
+}
+.mini-avatar {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  background: linear-gradient(150deg, #59bcf5, var(--brand-deep));
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pn {
+  font-size: 26rpx;
+  font-weight: 700;
+}
+.pc {
+  font-size: 22rpx;
+  color: var(--muted);
+}
+
+/* 底部操作条：白色胶囊容器 + 黑胶囊主按钮 */
+.joinbar {
+  position: fixed;
+  left: 32rpx;
+  right: 32rpx;
+  bottom: 28rpx;
+  display: flex;
+  gap: 20rpx;
+  align-items: center;
+  padding: 18rpx;
+  border-radius: 999rpx;
+  box-shadow: 0 30rpx 60rpx rgba(31, 102, 150, 0.22);
+  z-index: 50;
+}
+.joinbar .btn-black,
+.joinbar .btn-ghost {
+  height: 96rpx;
+  flex: 1;
+  box-shadow: none;
+}
+.joinbar .btn-ghost.chat {
+  flex: 0 0 auto;
+  padding: 0 34rpx;
+  font-size: 28rpx;
+}
+.danger {
+  color: #eb4d5c;
+}
+.retry {
+  margin-top: 30rpx;
+  height: 88rpx;
+  font-size: 28rpx;
+}

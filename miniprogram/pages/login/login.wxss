@@ -1,0 +1,68 @@
+.login {
+  padding: 40rpx 44rpx 60rpx;
+  box-sizing: border-box;
+}
+.hero {
+  display: block;
+  margin-top: 44rpx;
+  box-shadow: var(--shadow-card);
+  border-radius: 40rpx;
+}
+
+/* 模式切换：白胶囊容器 + 黑药丸选中 */
+.switch {
+  margin-top: 52rpx;
+  display: flex;
+  padding: 8rpx;
+  border-radius: 999rpx;
+}
+.seg {
+  flex: 1;
+  text-align: center;
+  padding: 22rpx 0;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all 0.2s ease-out;
+}
+.seg.on {
+  background: var(--black);
+  color: #fff;
+  font-weight: 800;
+}
+
+.form {
+  margin-top: 36rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+}
+.code-row {
+  display: flex;
+  gap: 20rpx;
+}
+.grow {
+  flex: 1;
+}
+.send {
+  height: 100rpx;
+  padding: 0 30rpx;
+  font-size: 27rpx;
+  flex-shrink: 0;
+}
+.send.disabled {
+  color: var(--muted);
+}
+.error {
+  background: rgba(235, 77, 92, 0.08);
+  border-radius: 28rpx;
+  padding: 22rpx 28rpx;
+  font-size: 26rpx;
+  color: #eb4d5c;
+}
+.agree {
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--muted);
+}

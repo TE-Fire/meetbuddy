@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "搭子 · 发现",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "map-scene": "/components/map-scene/map-scene"
+  }
+}

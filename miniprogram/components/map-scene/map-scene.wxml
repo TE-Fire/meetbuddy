@@ -1,0 +1,22 @@
+<view class="scene" style="height: {{height}}rpx; border-radius: {{radius}}rpx;">
+  <!-- 草地：两块椭圆 -->
+  <view class="hill h1"></view>
+  <view class="hill h2"></view>
+  <!-- 虚线路线：base64 SVG，弯曲虚线 + 两端点 -->
+  <view wx:if="{{route}}" class="route"></view>
+  <!-- 左上角黑标签 -->
+  <view wx:if="{{badge}}" class="ink-tag badge" style="background: {{badgeColor}};">{{badge}}</view>
+  <!-- 图钉 -->
+  <view
+    wx:for="{{pins}}"
+    wx:key="index"
+    class="pin {{item.accent ? 'accent' : ''}}"
+    style="left: {{item.x * 100}}%; top: {{item.y * 100}}%;"
+  >
+    <view class="pin-box">{{item.text}}</view>
+    <view class="pin-tail"></view>
+  </view>
+  <!-- 贴纸 -->
+  <view wx:if="{{sticker}}" class="sticker s1">{{sticker}}</view>
+  <view wx:if="{{sticker2}}" class="sticker s2">{{sticker2}}</view>
+</view>

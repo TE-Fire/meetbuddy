@@ -1,0 +1,95 @@
+.scene {
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #e3f4fe 0%, #f6fcff 100%);
+}
+
+/* —— 草地 —— */
+.hill {
+  position: absolute;
+  border-radius: 50%;
+}
+.h1 {
+  width: 150%;
+  height: 92%;
+  left: -30%;
+  top: 34%;
+  background: var(--grass);
+}
+.h2 {
+  width: 110%;
+  height: 74%;
+  left: 28%;
+  top: 10%;
+  background: var(--grass-light);
+  opacity: 0.85;
+}
+
+/* —— 虚线路线 —— */
+.route {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 240'%3E%3Cpath d='M52 192 C 144 158, 120 100, 208 96 S 300 88, 348 31' fill='none' stroke='%234FC3F7' stroke-width='7' stroke-linecap='round' stroke-dasharray='2 22'/%3E%3Ccircle cx='52' cy='192' r='11' fill='%2338B2F2' stroke='white' stroke-width='6'/%3E%3Ccircle cx='348' cy='31' r='11' fill='%237CC96B' stroke='white' stroke-width='6'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+}
+
+/* —— 图钉 —— */
+.pin {
+  position: absolute;
+}
+.pin-box {
+  background: #fff;
+  border-radius: 26rpx;
+  padding: 12rpx 20rpx;
+  font-size: 22rpx;
+  font-weight: 800;
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+.pin.accent .pin-box {
+  color: var(--brand-deep);
+}
+.pin-tail {
+  width: 20rpx;
+  height: 20rpx;
+  background: #fff;
+  transform: rotate(45deg);
+  margin-left: 28rpx;
+  margin-top: -10rpx;
+}
+
+/* —— 贴纸 —— */
+.sticker {
+  position: absolute;
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 28rpx;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 46rpx;
+  transform: rotate(-8deg);
+}
+.s1 {
+  right: 6%;
+  top: 10%;
+}
+.s2 {
+  right: 14%;
+  bottom: 14%;
+  width: 76rpx;
+  height: 76rpx;
+  font-size: 38rpx;
+  transform: rotate(10deg);
+}
+
+/* —— 黑标签 —— */
+.badge {
+  position: absolute;
+  left: 24rpx;
+  top: 24rpx;
+}

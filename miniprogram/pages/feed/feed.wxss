@@ -1,0 +1,181 @@
+.page {
+  padding: 24rpx 0 220rpx;
+}
+.topnav {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 16rpx 40rpx 20rpx;
+}
+.city {
+  font-size: 34rpx;
+  font-weight: 900;
+  color: var(--ink);
+}
+.caret {
+  font-size: 26rpx;
+  color: var(--brand);
+}
+.search {
+  flex: 1;
+  height: 84rpx;
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  padding: 0 30rpx;
+  border-radius: 999rpx;
+}
+.s-icon {
+  font-size: 26rpx;
+}
+.s-text {
+  font-size: 26rpx;
+  color: var(--muted);
+}
+.geo {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+.geo.on {
+  background: var(--brand);
+  box-shadow: var(--shadow-glow);
+}
+
+.display {
+  padding: 12rpx 44rpx 0;
+}
+.display-sub {
+  padding: 0 44rpx 26rpx;
+}
+
+.chips {
+  display: flex;
+  white-space: nowrap;
+  padding: 0 40rpx;
+  box-sizing: border-box;
+  width: 100%;
+}
+.chips .chip {
+  display: inline-flex;
+  margin-right: 18rpx;
+}
+
+.geo-bar {
+  margin: 22rpx 40rpx 0;
+  padding: 18rpx 28rpx;
+  border-radius: 28rpx;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  font-size: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.geo-bar .change {
+  font-weight: 800;
+}
+
+/* —— 活动卡 —— */
+.list {
+  padding: 34rpx 36rpx 0;
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
+}
+.act {
+  overflow: hidden;
+}
+.cover-wrap {
+  position: relative;
+}
+.like {
+  position: absolute;
+  right: 24rpx;
+  top: 24rpx;
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  color: var(--hot);
+}
+.body {
+  padding: 28rpx 32rpx 32rpx;
+}
+.title {
+  font-size: 34rpx;
+  font-weight: 800;
+  color: var(--ink);
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  margin-top: 20rpx;
+}
+.progress {
+  margin-top: 26rpx;
+}
+.foot {
+  margin-top: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.who {
+  font-size: 24rpx;
+  color: var(--muted);
+  max-width: 60%;
+}
+.go {
+  font-size: 26rpx;
+  font-weight: 800;
+  color: var(--brand-deep);
+}
+.more {
+  text-align: center;
+  color: var(--muted);
+  font-size: 24rpx;
+  padding: 12rpx 0 4rpx;
+}
+.retry {
+  margin-top: 30rpx;
+  height: 88rpx;
+  font-size: 28rpx;
+}
+
+/* —— FAB —— */
+.fab {
+  position: fixed;
+  right: 40rpx;
+  bottom: 200rpx;
+  height: 108rpx;
+  padding: 0 40rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(150deg, #59bcf5, var(--brand-deep));
+  border: 7rpx solid var(--black);
+  box-shadow: var(--shadow-glow);
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  z-index: 99;
+}
+.plus {
+  font-size: 36rpx;
+  font-weight: 700;
+}

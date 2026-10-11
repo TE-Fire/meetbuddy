@@ -1,0 +1,35 @@
+<view class="sky page">
+  <view wx:if="{{readonly}}" class="banner">🔒 活动已取消，群聊转为只读</view>
+
+  <scroll-view scroll-y class="bubbles" scroll-into-view="{{scrollInto}}" scroll-with-animation>
+    <block wx:for="{{messages}}" wx:key="index">
+      <!-- 系统消息 -->
+      <view wx:if="{{item.isSystem}}" class="sys">{{item.content}}</view>
+      <!-- 普通气泡 -->
+      <view wx:else class="brow {{item.mine ? 'mine' : ''}}" id="m{{index}}">
+        <view class="bcol">
+          <view wx:if="{{!item.mine && item.sender}}" class="sender">{{item.sender}}</view>
+          <view class="bubble {{item.mine ? 'me' : 'them'}} {{item.pending ? 'pending' : ''}}">
+            <text wx:if="{{item.pending}}" class="clock">⏳</text>
+            {{item.content}}
+          </view>
+        </view>
+      </view>
+    </block>
+    <view wx:if="{{!messages.length}}" class="quiet">群里还很安静，说点什么打破沉默</view>
+  </scroll-view>
+
+  <view class="inputbar">
+    <view class="in card-sm">
+      <input
+        value="{{input}}"
+        placeholder="{{readonly ? '群聊已只读' : '说点什么…'}}"
+        disabled="{{readonly}}"
+        confirm-type="send"
+        bindinput="onInput"
+        bindconfirm="send"
+      />
+    </view>
+    <view class="send {{readonly || !input ? 'dim' : ''}}" bindtap="send">➤</view>
+  </view>
+</view>

@@ -19,13 +19,14 @@
 
 ```
 meetbuddy/
-├─ docs/      文档：技术决策、数据库设计、接口契约 —— 唯一依据
-├─ server/    Spring Boot 后端（含 docker/ 本地中间件）
-├─ mobile/    Flutter 用户端（M5）
-└─ admin/     Vue3 管理端（M6）
+├─ docs/         文档：技术决策、数据库设计、接口契约 —— 唯一依据
+├─ server/       Spring Boot 后端（含 docker/ 本地中间件）
+├─ mobile/       Flutter 用户端（M5）
+├─ miniprogram/  微信小程序用户端（与 mobile/ 共用同一套后端接口）
+└─ admin/        Vue3 管理端（M6）
 ```
 
-`server/` 和 `mobile/`、`admin/` 各自独立，前端不放进后端工程里。`mobile/` 已在 M5 落地（Flutter 用户端，含 mock / 真实双数据源）；`admin/` 目前只有 README（写明技术栈与启动方式），代码在 M6 落地。
+`server/` 和各端独立工程。`mobile/` 已在 M5 落地（Flutter 用户端，含 mock / 真实双数据源）；`miniprogram/` 已落地（覆盖登录→发现→详情/报名→发布→群聊→我的主链路，见 `miniprogram/README.md`）；`admin/` 目前只有 README（写明技术栈与启动方式），代码在 M6 落地。
 
 ## 文档索引
 

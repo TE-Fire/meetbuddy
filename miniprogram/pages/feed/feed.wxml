@@ -1,0 +1,95 @@
+<view class="sky page">
+  <!-- 顶栏：城市 + 搜索 + 就近 -->
+  <view class="topnav">
+    <view class="city">上海 <text class="caret">▾</text></view>
+    <view class="search card-sm" bindtap="searchTip">
+      <text class="s-icon">🔍</text>
+      <text class="s-text">搜活动、搜搭子</text>
+    </view>
+    <view class="geo {{geoEnabled ? 'on' : ''}}" bindtap="toggleGeo">📍</view>
+  </view>
+
+  <view class="display">附近有什么<text class="hl">好局</text></view>
+  <view class="display-sub" wx:if="{{me}}">{{me.nickname}} · 同城组局，找个搭子</view>
+
+  <!-- 分类 chips -->
+  <scroll-view scroll-x class="chips" enhanced show-scrollbar="{{false}}">
+    <view class="chip {{category === '' ? 'on' : ''}}" data-c="" bindtap="onCategory">全部</view>
+    <view
+      wx:for="{{categories}}"
+      wx:key="*this"
+      class="chip {{category === item ? 'on' : ''}}"
+      data-c="{{item}}"
+      bindtap="onCategory"
+    >{{item}}</view>
+  </scroll-view>
+
+  <view wx:if="{{geoEnabled}}" class="geo-bar">
+    <text>演示坐标：北京国贸 · 半径 {{radius}} km</text>
+    <text class="change">改半径 ›</text>
+  </view>
+
+  <!-- 活动流 -->
+  <view class="list">
+    <view wx:if="{{error}}" class="card empty">
+      <view class="title">{{error}}</view>
+      <view class="btn-ghost retry" bindtap="load" data-reset="1">重试</view>
+    </view>
+
+    <block wx:elif="{{feed.length}}">      <view
+        wx:for="{{feed}}"
+        wx:key="id"
+        class="act card"
+        data-id="{{item.id}}"
+        bindtap="openDetail"
+      >
+        <view class="cover-wrap">
+          <map-scene
+            badge="{{item.timeBadge}}"
+            badgeColor="{{item.isToday ? '#38B2F2' : '#171A1D'}}"
+            sticker="{{item.icon}}"
+            pins="{{[{text:'集合点', x:0.42, y:0.3, accent:true}]}}"
+            height="{{236}}"
+            radius="{{0}}"
+          />
+          <view class="like">❤</view>
+        </view>
+        <view class="body">
+          <view class="title ellipsis">{{item.title}}</view>
+          <view class="tags">
+            <view class="tag plain">📍 {{item.addrShort}}</view>
+            <view class="tag grass">{{item.category}}</view>
+            <view wx:if="{{item.status !== 'OPEN'}}" class="tag warm">{{item.statusText}}</view>
+          </view>
+          <view class="progress {{item.full ? 'full' : ''}}">
+            <view class="bar"><i style="width: {{item.ratio * 100}}%"></i></view>
+            <text class="num">{{item.currentParticipants}}/{{item.maxParticipants}} 人</text>
+          </view>
+          <view class="foot">
+            <text class="who ellipsis">
+              {{item.whoFirst ? item.whoFirst + (item.organizerNickname === item.whoFirst ? ' 发起' : '') : '还没有人报名，来做第一个'}}
+            </text>
+            <text class="go">去看看 ›</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="more" wx:if="{{hasMore || loading}}">{{loading ? '加载中…' : '上拉加载更多'}}</view>
+      <view class="more" wx:elif="{{feed.length >= 20}}">— 没有更多了 —</view>
+    </block>
+
+    <block wx:else>
+      <view wx:if="{{!loading}}" class="empty card">
+        <view class="icon">🧭</view>
+        <view class="title">{{geoEnabled ? '这个范围内还没有活动' : '还没有活动'}}</view>
+        <view class="hint">{{geoEnabled ? '把半径调大一点，或者关掉就近筛选看看全部' : '点右下角发起一个，做第一个组局的人'}}</view>
+      </view>
+    </block>
+  </view>
+
+  <!-- 发起活动 FAB -->
+  <view class="fab" bindtap="openCreate">
+    <text class="plus">＋</text>
+    <text>发起活动</text>
+  </view>
+</view>

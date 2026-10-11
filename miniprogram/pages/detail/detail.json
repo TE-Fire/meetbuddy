@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "活动详情",
+  "usingComponents": {
+    "map-scene": "/components/map-scene/map-scene"
+  }
+}

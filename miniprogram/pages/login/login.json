@@ -1,0 +1,6 @@
+{
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "map-scene": "/components/map-scene/map-scene"
+  }
+}

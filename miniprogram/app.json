@@ -1,0 +1,32 @@
+{
+  "pages": [
+    "pages/feed/feed",
+    "pages/chat-list/chat-list",
+    "pages/profile/profile",
+    "pages/login/login",
+    "pages/detail/detail",
+    "pages/create/create",
+    "pages/chat-room/chat-room"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#DDF0FC",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "搭子 · Meetbuddy",
+    "backgroundColor": "#F4FAFF",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#939BA3",
+    "selectedColor": "#FFFFFF",
+    "backgroundColor": "#171A1D",
+    "list": [
+      { "pagePath": "pages/feed/feed", "text": "发现" },
+      { "pagePath": "pages/chat-list/chat-list", "text": "消息" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

@@ -1,0 +1,35 @@
+<view class="sky page">
+  <view class="conn {{connected ? 'on' : ''}}">
+    <view class="dot"></view>
+    <text>{{connected ? '实时在线' : '连接中…'}}</text>
+  </view>
+
+  <block wx:if="{{groups.length}}">
+    <view
+      wx:for="{{groups}}"
+      wx:key="id"
+      class="group card-sm"
+      data-g="{{item}}"
+      bindtap="openRoom"
+    >
+      <view class="gava">💬</view>
+      <view class="gbody">
+        <view class="grow ellipsis gname">{{item.name}}</view>
+        <view class="glast ellipsis">{{item.lastMessage || '还没有消息'}}</view>
+      </view>
+      <view class="gright">
+        <text class="gtime">{{item.agoText}}</text>
+        <view wx:if="{{item.unread > 0}}" class="gunread">{{item.unread > 99 ? '99+' : item.unread}}</view>
+        <text wx:else class="gcount">{{item.memberCount}} 人</text>
+      </view>
+    </view>
+  </block>
+
+  <view wx:elif="{{!loading}}" class="empty card">
+    <view class="icon">💬</view>
+    <view class="title">还没有群聊</view>
+    <view class="hint">报名一个活动就会自动进群；自己发起的活动发布时群就建好了</view>
+  </view>
+
+  <view wx:else class="loading">加载中…</view>
+</view>

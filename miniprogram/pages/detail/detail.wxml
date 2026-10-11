@@ -1,0 +1,97 @@
+<view class="sky page" wx:if="{{a}}">
+  <!-- 封面地图插画 -->
+  <map-scene
+    class="hero"
+    badge="{{a.status === 'OPEN' ? '🔥 热门局' : a.statusText}}"
+    badgeColor="{{a.status === 'OPEN' ? '#171A1D' : '#B26A00'}}"
+    sticker="{{a.icon}}"
+    pins="{{[{text: a.slotsLeft > 0 ? '还差 ' + a.slotsLeft + ' 人' : '已满员', x:0.3, y:0.3, accent:true}]}}"
+    height="{{380}}"
+  />
+
+  <view class="head">
+    <view class="display">{{a.title}}</view>
+    <view class="sub">{{a.organizerNickname || '匿名用户'}} 发起 · {{a.timeText}}</view>
+    <view class="tags">
+      <view class="tag grass">{{a.category}}</view>
+      <view class="tag">{{a.statusText}}</view>
+      <view wx:if="{{a.creditRequired > 0}}" class="tag plain">信用分 ≥ {{a.creditRequired}}</view>
+    </view>
+  </view>
+
+  <!-- 信息卡 -->
+  <view class="card info">
+    <view class="irow">
+      <view class="iicon sky">🗓️</view>
+      <view class="itx">
+        <view class="t1">{{a.timeText}}</view>
+        <view class="t2">以群内通知的集合时间为准</view>
+      </view>
+    </view>
+    <view class="irow">
+      <view class="iicon grass">📍</view>
+      <view class="itx">
+        <view class="t1">{{a.address}}</view>
+        <view class="t2">集合点以群内通知为准</view>
+      </view>
+    </view>
+    <view class="irow last">
+      <view class="iicon warm">👥</view>
+      <view class="itx">
+        <view class="t1">{{a.currentParticipants}}/{{a.maxParticipants}}{{a.slotsLeft > 0 ? ' · 还剩 ' + a.slotsLeft + ' 个名额' : ' · 已满'}}</view>
+        <view class="t2">报名后自动进群，方便对时间和地点</view>
+      </view>
+    </view>
+    <view class="irow last" wx:if="{{a.tags && a.tags.length}}">
+      <view class="iicon plain">🏷️</view>
+      <view class="itx">
+        <view class="t1">{{a.tags}}</view>
+        <view class="t2">发起人贴的标签</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 介绍 -->
+  <block wx:if="{{a.description}}">
+    <view class="section-title">活动介绍</view>
+    <view class="card desc">{{a.description}}</view>
+  </block>
+
+  <!-- 组织者 -->
+  <view class="section-title">组织者</view>
+  <view class="card organizer">
+    <view class="avatar">{{a.organizerFirst}}</view>
+    <view class="grow ellipsis">{{a.organizerNickname || '匿名用户'}}</view>
+    <view wx:if="{{a.organizer}}" class="tag">我发起的</view>
+  </view>
+
+  <!-- 报名人 -->
+  <view class="section-title">已报名 {{a.participants.length}} 人 <text class="cap">上限 {{a.maxParticipants}} 人</text></view>
+  <view wx:if="{{!a.participants.length}}" class="none">还没有人报名，你是第一个也说不定</view>
+  <view wx:else class="pills">
+    <view wx:for="{{a.participants}}" wx:key="id" class="pill card-sm">
+      <view class="mini-avatar">{{item.first}}</view>
+      <text class="pn">{{item.nickname}}</text>
+      <text class="pc">{{item.creditScore}}</text>
+    </view>
+  </view>
+
+  <!-- 底部操作条 -->
+  <view class="joinbar card">
+    <view wx:if="{{a.hasGroup}}" class="btn-ghost chat" bindtap="openChat">
+      💬 {{a.signedUp || a.organizer ? '进入群聊' : '看看群聊'}}
+    </view>
+    <view wx:if="{{a.canSignUp}}" class="btn-black grow" bindtap="signUp">报名参加</view>
+    <view wx:elif="{{a.canCancelSignUp}}" class="btn-ghost grow danger" bindtap="cancelSignUp">取消报名</view>
+    <view wx:elif="{{a.organizer && !a.isClosed}}" class="btn-ghost grow danger" bindtap="cancelActivity">取消活动</view>
+    <view wx:else class="btn-black grow disabled">{{a.status === 'FULL' ? '名额已满' : a.statusText}}</view>
+  </view>
+</view>
+
+<view class="sky page" wx:elif="{{error}}">
+  <view class="empty card">
+    <view class="icon">📡</view>
+    <view class="title">{{error}}</view>
+    <view class="btn-ghost retry" bindtap="load">重试</view>
+  </view>
+</view>

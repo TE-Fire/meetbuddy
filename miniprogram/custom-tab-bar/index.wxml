@@ -1,0 +1,15 @@
+<view class="dock">
+  <view
+    wx:for="{{tabs}}"
+    wx:key="pagePath"
+    class="item {{selected === index ? 'on' : ''}}"
+    data-index="{{index}}"
+    bindtap="onTap"
+  >
+    <view class="icon-wrap">
+      <text class="icon">{{item.icon}}</text>
+      <view wx:if="{{index === 1 && unread > 0}}" class="badge">{{unread > 99 ? '99+' : unread}}</view>
+    </view>
+    <text class="label">{{item.text}}</text>
+  </view>
+</view>

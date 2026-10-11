@@ -1,0 +1,112 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 20rpx 0 0;
+  box-sizing: border-box;
+}
+.banner {
+  margin: 10rpx 36rpx 0;
+  padding: 20rpx 28rpx;
+  border-radius: 28rpx;
+  background: #fff0f1;
+  color: #eb4d5c;
+  font-size: 25rpx;
+}
+.bubbles {
+  flex: 1;
+  padding: 24rpx 36rpx;
+  box-sizing: border-box;
+}
+.sys {
+  text-align: center;
+  margin: 20rpx auto;
+  display: inline-block;
+  padding: 14rpx 26rpx;
+  border-radius: 999rpx;
+  background: #e9f1f7;
+  color: #6b7280;
+  font-size: 23rpx;
+  max-width: 70%;
+}
+.brow {
+  display: flex;
+  margin: 20rpx 0;
+}
+.brow.mine {
+  justify-content: flex-end;
+}
+.bcol {
+  max-width: 76%;
+}
+.sender {
+  font-size: 21rpx;
+  color: var(--muted);
+  font-weight: 700;
+  margin: 0 8rpx 8rpx;
+}
+.bubble {
+  padding: 22rpx 30rpx;
+  font-size: 29rpx;
+  line-height: 1.5;
+  word-break: break-all;
+  box-sizing: border-box;
+}
+.them {
+  background: #fff;
+  border-top-left-radius: 12rpx;
+  border-radius: 40rpx 40rpx 40rpx 12rpx;
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+}
+.me {
+  background: linear-gradient(150deg, #59bcf5, var(--brand-deep));
+  border-radius: 40rpx 40rpx 12rpx 40rpx;
+  box-shadow: 0 16rpx 32rpx rgba(24, 155, 224, 0.3);
+  color: #fff;
+}
+.pending {
+  opacity: 0.7;
+}
+.clock {
+  font-size: 24rpx;
+  margin-right: 8rpx;
+}
+.quiet {
+  text-align: center;
+  color: var(--muted);
+  font-size: 25rpx;
+  padding-top: 160rpx;
+}
+
+.inputbar {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 32rpx 44rpx;
+}
+.in {
+  flex: 1;
+  height: 96rpx;
+  border-radius: 999rpx;
+  padding: 0 32rpx;
+  display: flex;
+  align-items: center;
+}
+.send {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: var(--black);
+  color: #fff;
+  font-size: 34rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-ink);
+  flex-shrink: 0;
+}
+.send.dim {
+  background: #c7d0d8;
+  box-shadow: none;
+}

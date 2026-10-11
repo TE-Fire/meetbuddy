@@ -1,0 +1,52 @@
+<view class="sky page" wx:if="{{me}}">
+  <view class="logout" bindtap="logout">退出登录</view>
+
+  <view class="avatar">{{me.first}}</view>
+  <view class="nameline">
+    <text class="name">{{me.nickname}}</text>
+    <view class="lv">信用分 {{me.creditScore}}</view>
+  </view>
+  <view class="bio">{{me.bio || '同城组局，找个搭子'}}</view>
+
+  <view class="card stats">
+    <view class="stat"><text class="v">{{me.creditScore}}</text><text class="l">信用分</text></view>
+    <view class="stat"><text class="v">{{organized.length}}</text><text class="l">我发起的</text></view>
+    <view class="stat"><text class="v">{{joined.length}}</text><text class="l">我报名的</text></view>
+  </view>
+
+  <view class="src">📡 数据源：已连接本地后端{{connected ? '（实时在线）' : ''}}</view>
+
+  <!-- 我发起的 -->
+  <view class="section-title">我发起的</view>
+  <view wx:if="{{!organized.length}}" class="none">还没发起过活动，去发现页点右下角做第一个组局的人</view>
+  <view wx:else class="cards">
+    <view wx:for="{{organized}}" wx:key="id" class="mini card" data-id="{{item.id}}" bindtap="openDetail">
+      <view class="micon">{{item.icon}}</view>
+      <view class="mbody">
+        <view class="mtitle ellipsis">{{item.title}}</view>
+        <view class="mmeta">{{item.timeBadge}} · {{item.addrShort}}</view>
+        <view class="progress {{item.full ? 'full' : ''}}">
+          <view class="bar"><i style="width: {{item.ratio * 100}}%"></i></view>
+          <text class="num">{{item.currentParticipants}}/{{item.maxParticipants}} 人</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 我报名的 -->
+  <view class="section-title">我报名的</view>
+  <view wx:if="{{!joined.length}}" class="none">还没报名过活动，看看发现页里有什么合适的</view>
+  <view wx:else class="cards">
+    <view wx:for="{{joined}}" wx:key="id" class="mini card" data-id="{{item.id}}" bindtap="openDetail">
+      <view class="micon">{{item.icon}}</view>
+      <view class="mbody">
+        <view class="mtitle ellipsis">{{item.title}}</view>
+        <view class="mmeta">{{item.timeBadge}} · {{item.addrShort}}</view>
+        <view class="progress {{item.full ? 'full' : ''}}">
+          <view class="bar"><i style="width: {{item.ratio * 100}}%"></i></view>
+          <text class="num">{{item.currentParticipants}}/{{item.maxParticipants}} 人</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
