@@ -1,0 +1,87 @@
+# ---------- 通用 ----------
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+desktop.ini
+
+# ---------- IDE ----------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+*.swp
+
+# ---------- 后端 server/ ----------
+server/target/
+server/**/target/
+!server/**/src/main/**/target/
+!server/**/src/test/**/target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+### 本地配置与环境（含数据库 / Redis 口令，一律不入库）
+server/src/main/resources/application-local.yml
+server/src/main/resources/application-secret.yml
+server/.env.local
+### 构建产物
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# ---------- Flutter mobile/ ----------
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/.pub-cache/
+mobile/.pub/
+mobile/build/
+mobile/coverage/
+mobile/ios/.generated/
+mobile/ios/Flutter/Generated.xcconfig
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/app/debug
+mobile/android/app/profile
+mobile/android/app/release
+mobile/android/gradlew.bat
+mobile/android/gradlew
+mobile/android/gradle/wrapper/gradle-wrapper.jar
+mobile/.metadata
+mobile/*.iml
+mobile/analysis_options.local.yaml
+mobile/flutter_*.png
+mobile/lcov.info
+### 密钥与本地配置
+mobile/.env
+mobile/lib/config/local.dart
+
+# ---------- 管理端 admin/ ----------
+admin/node_modules/
+admin/dist/
+admin/.vite/
+admin/build/
+admin/coverage/
+admin/.env.local
+admin/.env.*.local
+admin/package-lock.json
+admin/yarn.lock
+admin/pnpm-lock.yaml
+admin/.eslintcache
+
+# ---------- 本地中间件（server/docker） ----------
+# 端口与数据目录人人不同，仓库里只留 .env.example
+server/docker/.env
+server/docker/data/
+
+# ---------- AI 工作区 ----------
+# 整个目录不入库：里面是本地记忆、临时脚本和会话产物，属于个人工作区而非交付物
+.workbuddy/

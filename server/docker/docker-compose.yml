@@ -1,0 +1,40 @@
+# 同城活动组局与搭子匹配平台 · 本地中间件
+# 用法：在本文件所在目录执行
+#   docker compose up -d
+#   docker compose ps          # 看健康状态
+#
+# 端口与数据目录写在同目录的 .env 里（变量插值），改那里即可：
+#   DATA_ROOT   数据落盘根目录，默认 D:/docker/meetbuddy
+#   REDIS_PASSWORD  连接口令，仓库里只留占位符，真值在 .env（已 gitignore）
+#   本机已装 Redis 3.0.504 占 6379，且该版本不支持 GEO（3.2 才引入），
+#   故宿主机端口偏移到 6380，并整体换成 Redis 7.2.3
+#
+# 数据用的是 bind mount（直接落在 D 盘），不是命名卷。因此：
+#   - `docker compose down -v` 删不掉宿主机数据，要重来必须手动删 DATA_ROOT 下的目录
+#
+# 注意：本机 3306 上的 MySQL 8.0.43 继续由应用直连，不纳入本 compose；
+# 若以后要连库一起容器化，照 campus-market 的写法加 services.mysql 即可。
+
+services:
+  # ── Redis 7 ─────────────────────────────────────────────
+  redis:
+    # 本机已有 redis:7.2.3（debian 版，含 redis-cli，healthcheck 用得上），
+    # 刻意不用 7-alpine：alpine 版要重新拉，且 musl 下 redis-cli 行为略有差异。
+    # 关键是版本 —— GEO 系列命令（GEOADD/GEOSEARCH）要求 Redis ≥ 3.2，
+    # 本机原有的 3.0.504（微软 2016 Windows 移植版）没有，这是换 Docker 的唯一原因。
+    image: redis:7.2.3
+    container_name: mb-redis
+    # AOF 落盘 + --save "" 关掉 RDB 快照：开发期只关心「重启后登录态/锁还在」，
+    # 不需要定时 fork 写快照（fork 在 Windows 上要复制页表，内存本就紧张）
+    command: redis-server --requirepass "${REDIS_PASSWORD}" --appendonly yes --save ""
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - ${DATA_ROOT}/redis/data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
