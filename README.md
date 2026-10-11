@@ -25,7 +25,7 @@ meetbuddy/
 └─ admin/     Vue3 管理端（M6）
 ```
 
-`server/` 和 `mobile/`、`admin/` 各自独立，前端不放进后端工程里。`mobile/` 与 `admin/` 现在只有 README（写明技术栈与启动方式），代码在 M5 / M6 才落地。
+`server/` 和 `mobile/`、`admin/` 各自独立，前端不放进后端工程里。`mobile/` 已在 M5 落地（Flutter 用户端，含 mock / 真实双数据源）；`admin/` 目前只有 README（写明技术栈与启动方式），代码在 M6 落地。
 
 ## 文档索引
 
@@ -78,7 +78,7 @@ cd server/docker && docker compose up -d   # mb-redis，宿主端口 6380
 | ~~M2~~ ✅ | 活动与报名 | 发活动→报名→满员截止；100 并发抢 20 个名额实测恰好 20 人，无锁对照组超员 9 人。详见 `server/README.md` |
 | ~~M3~~ ✅ | LBS 匹配 | Redis GEO 就近筛选 ✅；加权评分返回 Top N ✅；P95 时延压测 ✅（无竞争 P95 26.7ms，50 并发 719ms，五组对照见 `server/README.md`） |
 | ~~M4~~ ✅ | 即时通信 | 单聊+群聊 ✅；断线重连补发离线消息 ✅；到达率可统计 ✅（实时 0.667 / 最终 1.0）。21 项验收见 `server/README.md` |
-| M5 | Flutter 前端 | 浏览器中完整走通「发布→报名→进群聊」 |
+| ~~M5~~ ✅ | Flutter 前端 | 浏览器中完整走通「发布→报名→进群聊」✅（双账号三段式 14/14，控制台无 error，实测见 `mobile/README.md`） |
 | M6 | 管理端 | 审核、封禁、看板可用 |
 | M7 | 实验与论文 | 三组实验出数据，落到论文章节 |
 

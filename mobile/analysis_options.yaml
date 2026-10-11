@@ -1,0 +1,14 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - web/**
+
+linter:
+  rules:
+    # state 类的构造参数用具名公开名（`auth:`）而不是 `this._auth`：
+    # 调用点写成 `SessionState(auth: ..., user: ...)` 比 `SessionState(_auth: ...)` 可读，
+    # 而字段本身仍然私有。这条规则会把前者判为可简写，与这个取舍冲突，故关闭。
+    prefer_initializing_formals: false

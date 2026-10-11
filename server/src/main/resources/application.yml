@@ -33,6 +33,10 @@ mybatis-plus:
       id-type: auto
 
 meetbuddy:
+  cors:
+    # 允许跨域的来源。开发期 Flutter Web 预览的端口是随机的，所以按 localhost 通配；
+    # 上线前改成正式前端域名（可逗号分隔多个）。见 WebMvcConfig#addCorsMappings
+    allowed-origin-patterns: http://localhost:*,http://127.0.0.1:*
   signup:
     # 报名是否走 Redis 分布式锁。关掉可复现超卖，用于 M7 的"有锁/无锁"对照实验；
     # 除压测外必须保持 true

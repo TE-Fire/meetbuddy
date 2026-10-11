@@ -141,7 +141,7 @@ M3 初版给 `radius` 加的是 `@Min(1) @Max(100)`，验收脚本按 `0.5 ~ 150
 
 复跑：`python bench_match.py`（默认 150 用户 / 100 需求 / 50 并发 / 20 轮）；换接口做对照用 `BENCH_PATH='/user/me' SKIP_SEED=1 python bench_match.py 60 0 50 20`。
 
-> 想再抬吞吐有三条路，都没动，等 TE 拍板：GEO 结果先按距离截断 Top-K 再查库；用户与标签挂 Redis 缓存；Tomcat 线程数与 Hikari 连接池调参。前两条会改变匹配语义（远处的潜在高分候选被截掉），第三条才是纯配置。
+> **结论：不优化，保持现在的匹配语义。** 三条候选路径都评估过——GEO 结果先按距离截断 Top-K、用户与标签挂 Redis 缓存、Tomcat 线程数与 Hikari 连接池调参。前两条会改变匹配语义（远处的潜在高分候选被截掉，与 `docs/01` 第七节「先 GEO 圈人、再算分」的约定冲突），为一个并非算法造成的数字牺牲语义不划算；第三条是纯配置，但 E 组已经证明瓶颈是本机单实例的吞吐上限——最简接口也只有 185 req/s，调参换不到量级变化。论文侧该引的是 C 组的算法时延 26.7ms，不是 A 组的 719ms。等真部署到多核机器上再谈。
 
 ## M4 验收用例与实测结果
 
@@ -231,11 +231,22 @@ Activity activity = BizAssert.notNull(activityMapper.selectById(id),
 MEETBUDDY_PROFILE=prod bash server/run-local.sh   # 此时 123456 应该登录失败
 ```
 
+## 跨域（M5 起）
+
+Flutter Web 用浏览器预览，页面与后端不同源，**没有 CORS 映射的话请求会死在预检阶段**——前端报 `Failed to fetch`，后端日志里一条记录都没有，很容易误判成"后端挂了"。
+
+配置在 `WebMvcConfig#addCorsMappings`：允许 `/api/**`，来源走 `meetbuddy.cors.allowed-origin-patterns`（默认 `http://localhost:*,http://127.0.0.1:*`）。用通配端口是因为 `flutter run -d edge` 每次分配的端口都不一样，写死某个端口第二天就失效。
+
+两个配套细节：
+
+- **预检请求必须先放行。** `AuthInterceptor` 里对 `CorsUtils.isPreFlightRequest` 直接返回 true——浏览器发 OPTIONS 时不带 `Authorization`，不放行的话所有带 JSON 体的调用都会死在预检。这段代码 M1 就写好了，但当时没有 CORS 映射，等于一直没被走到。
+- **WebSocket 不走这套。** `/ws` 的握手不是普通 MVC 请求，CORS 映射管不到，来源校验在 `WebSocketConfig#setAllowedOriginPatterns` 单独配。
+
 ## 遗留项（进 M4 之前该处理的）
 
 | 项 | 现状 | 打算怎么处理 |
 |---|---|---|
-| WebSocket 放开了 Origin 校验 | `WebSocketConfig` 里 `setAllowedOriginPatterns("*")`，任何站点都能发起连接 | 上线前改成前端域名白名单 |
+| WebSocket 放开了 Origin 校验 | HTTP 侧已收口（见下节「跨域」），但 `WebSocketConfig` 仍是 `setAllowedOriginPatterns("*")` | 上线前把两边都改成前端域名白名单 |
 | `/api/chat/stats` 只有登录门槛 | 单机演示的简化，任何登录用户都能读投递计数 | M6 做管理端时挪到 `/admin/**` 或加权限码 |
 | `Result` 没有 traceId | 校园市场的 `Result` 带 `traceId`（MDC 取），这边没有，排查时只能靠时间戳对 | 要加得配一个写入 MDC 的 Filter，属于独立一件事，不往这次改动里塞 |
 

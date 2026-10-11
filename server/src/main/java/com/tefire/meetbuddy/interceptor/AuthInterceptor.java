@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
@@ -34,6 +35,12 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
+        // 预检请求按规范不带 Authorization 头，也拿不到令牌——浏览器发 OPTIONS 时先放行，
+        // 真正的鉴权落在紧随其后的那个真实请求上。不放过这里，前端所有带 JSON 体的调用都会死在预检。
+        if (CorsUtils.isPreFlightRequest(request)) {
+            return true;
+        }
+
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith(BEARER)) {
             reject(response, CommonErrorCode.UNAUTHORIZED);
