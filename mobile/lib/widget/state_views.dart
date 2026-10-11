@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'ui.dart';
+
 /// 空列表占位。带一句人话，而不是只画个灰图标。
 class EmptyView extends StatelessWidget {
   const EmptyView({
@@ -17,22 +19,32 @@ class EmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(icon, size: 56, color: scheme.outlineVariant),
-            const SizedBox(height: 16),
-            Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: scheme.onSurfaceVariant)),
+            Container(
+              width: 92,
+              height: 92,
+              decoration: const BoxDecoration(
+                color: AppBrand.primarySoft,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 40, color: AppBrand.primary),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppBrand.ink),
+            ),
             if (hint != null) ...<Widget>[
               const SizedBox(height: 8),
               Text(
                 hint!,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: scheme.outline, height: 1.6),
+                style: const TextStyle(fontSize: 13, color: AppBrand.muted, height: 1.6),
               ),
             ],
             if (action != null) ...<Widget>[
@@ -62,17 +74,25 @@ class ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(Icons.cloud_off_outlined, size: 56, color: scheme.error.withValues(alpha: 0.6)),
-            const SizedBox(height: 16),
+            Container(
+              width: 92,
+              height: 92,
+              decoration: BoxDecoration(
+                color: scheme.error.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.cloud_off_outlined, size: 40, color: scheme.error),
+            ),
+            const SizedBox(height: 18),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: scheme.onSurfaceVariant, height: 1.6),
+              style: const TextStyle(fontSize: 14, color: AppBrand.ink2, height: 1.6),
             ),
             const SizedBox(height: 20),
             OutlinedButton.icon(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
+              icon: const Icon(Icons.refresh_rounded),
               label: const Text('重试'),
             ),
           ],

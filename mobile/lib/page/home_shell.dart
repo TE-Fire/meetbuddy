@@ -65,7 +65,7 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-/// 渐变 FAB。手写胶囊替代默认圆形，配品牌投影。
+/// 品牌蓝胶囊 FAB，外面套一圈黑描边——参考稿里那颗"蓝圆 + 黑环"的按钮。
 class _GradientFab extends StatelessWidget {
   const _GradientFab({super.key, required this.onTap});
 
@@ -78,11 +78,12 @@ class _GradientFab extends StatelessWidget {
       child: PressableScale(
         onTap: onTap,
         child: Container(
-          height: 52,
-          padding: const EdgeInsets.symmetric(horizontal: 18),
+          height: 54,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
             gradient: AppBrand.brand,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: AppBrand.black, width: 3.5),
             boxShadow: AppBrand.glow,
           ),
           child: const Row(
@@ -92,7 +93,7 @@ class _GradientFab extends StatelessWidget {
               SizedBox(width: 6),
               Text(
                 '发起活动',
-                style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
+                style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
               ),
             ],
           ),
@@ -102,7 +103,7 @@ class _GradientFab extends StatelessWidget {
   }
 }
 
-/// 悬浮胶囊导航条：选中项有品牌色药丸底，文字与图标颜色随动。
+/// 悬浮黑胶囊导航条：选中项转白字并带天空蓝辉光。
 class _NavDock extends StatelessWidget {
   const _NavDock({required this.index, required this.unread, required this.onChanged});
 
@@ -114,26 +115,31 @@ class _NavDock extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: AppBrand.card,
-        ),
-        child: Row(
-          children: <Widget>[
-            _item(0, Icons.explore_rounded, Icons.explore_outlined, '活动', 0),
-            _item(1, Icons.forum_rounded, Icons.forum_outlined, '消息', unread),
-            _item(2, Icons.person_rounded, Icons.person_outline, '我的', 0),
-          ],
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
+        child: Container(
+          height: 62,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: AppBrand.black.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(color: Color(0x59171A1D), blurRadius: 28, offset: Offset(0, 12)),
+            ],
+          ),
+          child: Row(
+            children: <Widget>[
+              _item(0, Icons.explore_rounded, '发现', 0),
+              _item(1, Icons.forum_rounded, '消息', unread),
+              _item(2, Icons.person_rounded, '我的', 0),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _item(int i, IconData activeIcon, IconData icon, String label, int badge) {
+  Widget _item(int i, IconData icon, String label, int badge) {
     final selected = index == i;
     return Expanded(
       child: Semantics(
@@ -145,41 +151,57 @@ class _NavDock extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOut,
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            padding: const EdgeInsets.symmetric(vertical: 6),
             decoration: BoxDecoration(
-              color: selected ? AppBrand.primary.withValues(alpha: 0.10) : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
+              color: selected ? Colors.white.withValues(alpha: 0.10) : Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Icon(selected ? activeIcon : icon, size: 22,
-                    color: selected ? AppBrand.primary : AppBrand.muted),
-                const SizedBox(width: 5),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: <Widget>[
+                    Icon(
+                      icon,
+                      size: 20,
+                      color: selected ? Colors.white : const Color(0xFF939BA3),
+                    ),
+                    if (badge > 0)
+                      Positioned(
+                        right: -7,
+                        top: -5,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: AppBrand.hot,
+                            borderRadius: BorderRadius.circular(9),
+                            border: Border.all(color: AppBrand.black, width: 1.4),
+                          ),
+                          child: Text(
+                            bucketBadge(badge),
+                            style: const TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 3),
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 200),
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 9.5,
                     fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                    color: selected ? AppBrand.primary : AppBrand.muted,
+                    color: selected ? Colors.white : const Color(0xFF939BA3),
                   ),
                   child: Text(label),
                 ),
-                if (badge > 0) ...<Widget>[
-                  const SizedBox(width: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: AppBrand.hot,
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Text(
-                      '$badge',
-                      style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.white),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -188,3 +210,6 @@ class _NavDock extends StatelessWidget {
     );
   }
 }
+
+/// 未读徽标超过 99 显示 99+。
+String bucketBadge(int n) => n > 99 ? '99+' : '$n';

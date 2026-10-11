@@ -50,10 +50,11 @@ ThemeData buildTheme() {
   const primary = AppBrand.primary;
   final scheme = ColorScheme.fromSeed(seedColor: primary).copyWith(
     primary: primary,
-    secondary: AppBrand.secondary,
+    secondary: AppBrand.grassDeep,
     error: const Color(0xFFEB4D5C),
     surface: Colors.white,
     onPrimary: Colors.white,
+    outlineVariant: AppBrand.line,
   );
 
   return ThemeData(
@@ -62,7 +63,7 @@ ThemeData buildTheme() {
     // 不显式写 fontFamily：引擎默认回落到 'Roboto'，而 pubspec 把 "Roboto"
     // 注册成了打包的 NotoSansSC——所有样式（包括没写字族的 const TextStyle）
     // 都落在本地字体上，不再触发 gstatic 切片下载。
-    scaffoldBackgroundColor: AppBrand.bg,
+    scaffoldBackgroundColor: const Color(0xFFF2F9FE),
     splashFactory: InkSparkle.splashFactory,
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.transparent,
@@ -71,7 +72,7 @@ ThemeData buildTheme() {
       centerTitle: false,
       titleTextStyle: TextStyle(
         fontSize: 19,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w900,
         color: AppBrand.ink,
         letterSpacing: -0.2,
       ),
@@ -81,62 +82,71 @@ ThemeData buildTheme() {
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: AppBrand.line.withValues(alpha: 0.6)),
+        borderRadius: BorderRadius.circular(AppBrand.rLg),
+        side: BorderSide(color: AppBrand.line.withValues(alpha: 0.5)),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white,
+      fillColor: const Color(0xFFF3F8FC),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: AppBrand.line),
+        borderRadius: BorderRadius.circular(AppBrand.rSm),
+        borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: AppBrand.line),
+        borderRadius: BorderRadius.circular(AppBrand.rSm),
+        borderSide: const BorderSide(color: Color(0xFFE4EEF6)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppBrand.rSm),
         borderSide: BorderSide(color: primary, width: 1.7),
       ),
       labelStyle: const TextStyle(color: AppBrand.muted, fontSize: 14.5),
-      hintStyle: const TextStyle(color: AppBrand.muted, fontSize: 14.5),
+      hintStyle: const TextStyle(color: Color(0xFFB9C6D0), fontSize: 14.5),
     ),
+    // 主按钮在全局就是黑胶囊：弹窗确认、报名、发布都统一。
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: primary,
+        backgroundColor: AppBrand.black,
         foregroundColor: Colors.white,
-        minimumSize: const Size.fromHeight(52),
+        minimumSize: const Size.fromHeight(50),
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        shape: const StadiumBorder(),
+        textStyle: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: AppBrand.ink,
-        minimumSize: const Size.fromHeight(48),
-        side: const BorderSide(color: AppBrand.line),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        backgroundColor: Colors.white,
+        minimumSize: const Size.fromHeight(50),
+        side: const BorderSide(color: AppBrand.line, width: 1.5),
+        shape: const StadiumBorder(),
+        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: AppBrand.primaryDeep,
+        textStyle: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
       ),
     ),
     chipTheme: const ChipThemeData(
       backgroundColor: Colors.white,
-      selectedColor: Color(0x1E5B7FFF),
-      side: BorderSide(color: AppBrand.line),
+      selectedColor: AppBrand.primary,
+      side: BorderSide(color: AppBrand.line, width: 1.5),
       shape: StadiumBorder(),
       showCheckmark: false,
-      labelPadding: EdgeInsets.symmetric(horizontal: 10),
+      labelPadding: EdgeInsets.symmetric(horizontal: 12),
       padding: EdgeInsets.symmetric(horizontal: 6, vertical: 9),
-      labelStyle: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppBrand.ink),
+      labelStyle: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppBrand.ink2),
+      secondaryLabelStyle: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Colors.white),
     ),
     tabBarTheme: const TabBarThemeData(
-      labelColor: AppBrand.primary,
+      labelColor: AppBrand.ink,
       unselectedLabelColor: AppBrand.muted,
-      labelStyle: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+      labelStyle: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800),
       unselectedLabelStyle: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w500),
       dividerColor: Colors.transparent,
       indicatorColor: AppBrand.primary,
@@ -144,28 +154,28 @@ ThemeData buildTheme() {
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: const Color(0xFF1D2233),
+      backgroundColor: AppBrand.black,
       contentTextStyle: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
       elevation: 0,
     ),
     progressIndicatorTheme: const ProgressIndicatorThemeData(
       color: AppBrand.primary,
-      linearTrackColor: Color(0xFFE8EBF4),
+      linearTrackColor: Color(0xFFEDF4F9),
     ),
     sliderTheme: const SliderThemeData(
       activeTrackColor: AppBrand.primary,
-      inactiveTrackColor: Color(0xFFE4E7F2),
+      inactiveTrackColor: Color(0xFFE1EDF5),
       thumbColor: Colors.white,
-      trackHeight: 4,
-      thumbShape: RoundSliderThumbShape(elevation: 3, enabledThumbRadius: 9),
-      overlayColor: Color(0x1E5B7FFF),
+      trackHeight: 5,
+      thumbShape: RoundSliderThumbShape(elevation: 3, enabledThumbRadius: 10),
+      overlayColor: Color(0x1E38B2F2),
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppBrand.rLg)),
       titleTextStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppBrand.ink),
-      contentTextStyle: const TextStyle(fontSize: 14, height: 1.6, color: Color(0xFF4A5068)),
+      contentTextStyle: const TextStyle(fontSize: 14, height: 1.6, color: AppBrand.ink2),
     ),
     dividerTheme: const DividerThemeData(space: 1, thickness: 1, color: AppBrand.line),
     pageTransitionsTheme: PageTransitionsTheme(

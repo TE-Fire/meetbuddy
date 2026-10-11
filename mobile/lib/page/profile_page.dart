@@ -44,37 +44,44 @@ class _ProfilePageState extends State<ProfilePage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: const Text('我的'),
           actions: <Widget>[
             IconButton(
               tooltip: '退出登录',
               onPressed: () => _confirmLogout(context),
-              icon: const Icon(Icons.logout),
+              icon: const Icon(Icons.logout_rounded),
             ),
           ],
         ),
-        body: NestedScrollView(
-          headerSliverBuilder: (_, _) => <Widget>[
-            SliverToBoxAdapter(child: _header(context, me, scope.usingMock)),
-          ],
-          body: Column(
-            children: <Widget>[
-              const TabBar(
-                tabs: <Widget>[
-                  Tab(text: '我发起的'),
-                  Tab(text: '我报名的'),
-                ],
-              ),
-              Expanded(
-                child: TabBarView(
-                  children: <Widget>[
-                    _list(context, activities.organized, '还没发起过活动', '去活动页点右下角，做第一个组局的人'),
-                    _list(context, activities.joined, '还没报名过活动', '看看活动流里有什么合适的'),
-                  ],
-                ),
-              ),
+        body: SkyBackground(
+          height: 380,
+          child: NestedScrollView(
+            headerSliverBuilder: (_, _) => <Widget>[
+              SliverToBoxAdapter(child: _header(context, me, scope.usingMock, activities)),
             ],
+            body: Column(
+              children: <Widget>[
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(18, 4, 18, 10),
+                  child: TabBar(
+                    tabs: <Widget>[
+                      Tab(text: '我发起的'),
+                      Tab(text: '我报名的'),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: <Widget>[
+                      _list(context, activities.organized, '还没发起过活动', '去活动页点右下角，做第一个组局的人'),
+                      _list(context, activities.joined, '还没报名过活动', '看看活动流里有什么合适的'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -83,113 +90,104 @@ class _ProfilePageState extends State<ProfilePage> {
 
   /// `me` 由 build() 判空后传进来，这里不再做第二次 `!`——
   /// headerSliverBuilder 是延迟调用的闭包，多一个断言点就多一个崩溃面。
-  Widget _header(BuildContext context, User me, bool usingMock) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: AppBrand.glow,
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          decoration: const BoxDecoration(gradient: AppBrand.brand),
-          padding: const EdgeInsets.all(20),
-          child: Stack(
+  Widget _header(BuildContext context, User me, bool usingMock, ActivityState activities) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
+      child: Column(
+        children: <Widget>[
+          // 头像：白描边圆角方块 + 天空蓝渐变底
+          Container(
+            width: 86,
+            height: 86,
+            decoration: const BoxDecoration(
+              gradient: AppBrand.brand,
+              borderRadius: BorderRadius.all(Radius.circular(30)),
+              boxShadow: AppBrand.glow,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              me.nickname.characters.first,
+              style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.w900),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Positioned(
-                right: -40,
-                top: -46,
-                child: Blob(size: 130, color: Colors.white.withValues(alpha: 0.14)),
+              Text(
+                me.nickname,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppBrand.ink),
               ),
-              Positioned(
-                left: -30,
-                bottom: -56,
-                child: Blob(size: 140, color: Colors.white.withValues(alpha: 0.10)),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      // 白色描边头像：内层半透明露出渐变底，字才看得清
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.25),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 2),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          me.nickname.characters.first,
-                          style: const TextStyle(
-                              fontSize: 22, color: Colors.white, fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(me.nickname,
-                                style: const TextStyle(
-                                    fontSize: 19, color: Colors.white, fontWeight: FontWeight.w800)),
-                            const SizedBox(height: 4),
-                            Text(
-                              me.phone.length == 11
-                                  ? '${me.phone.substring(0, 3)}****${me.phone.substring(7)}'
-                                  : me.phone,
-                              style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.85)),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // 信用分玻璃徽章
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: <Widget>[
-                            Text('${me.creditScore}',
-                                style: const TextStyle(
-                                    fontSize: 22, color: Colors.white, fontWeight: FontWeight.w800)),
-                            Text('信用分',
-                                style: TextStyle(
-                                    fontSize: 11, color: Colors.white.withValues(alpha: 0.85))),
-                          ],
-                        ),
-                      ),
-                    ],
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppBrand.primarySoft,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '信用分 ${me.creditScore}',
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppBrand.primaryDeep,
                   ),
-                  if ((me.bio ?? '').isNotEmpty) ...<Widget>[
-                    const SizedBox(height: 14),
-                    Text(me.bio!,
-                        style: TextStyle(
-                            fontSize: 13, color: Colors.white.withValues(alpha: 0.92), height: 1.5)),
-                  ],
-                  const SizedBox(height: 14),
-                  Row(
-                    children: <Widget>[
-                      Icon(usingMock ? Icons.science_outlined : Icons.cloud_done_outlined,
-                          size: 15, color: Colors.white.withValues(alpha: 0.85)),
-                      const SizedBox(width: 6),
-                      Text(
-                        usingMock ? '数据源：内存假数据（USE_MOCK）' : '数据源：已连接本地后端',
-                        style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.85)),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 5),
+          Text(
+            (me.bio ?? '').isNotEmpty
+                ? me.bio!
+                : (me.phone.length == 11
+                    ? '${me.phone.substring(0, 3)}****${me.phone.substring(7)}'
+                    : me.phone),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12.5, color: AppBrand.muted),
+          ),
+          const SizedBox(height: 18),
+
+          // 数据卡
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppBrand.rMd),
+              boxShadow: AppBrand.card,
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              children: <Widget>[
+                _Stat(value: '${me.creditScore}', label: '信用分'),
+                _Stat(value: '${activities.organized.length}', label: '我发起的'),
+                _Stat(value: '${activities.joined.length}', label: '我报名的'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  usingMock ? Icons.science_outlined : Icons.cloud_done_outlined,
+                  size: 15,
+                  color: AppBrand.muted,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  usingMock ? '数据源：内存假数据（USE_MOCK）' : '数据源：已连接本地后端',
+                  style: const TextStyle(fontSize: 12, color: AppBrand.muted),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -201,9 +199,9 @@ class _ProfilePageState extends State<ProfilePage> {
     return RefreshIndicator(
       onRefresh: () => context.read<ActivityState>().loadMine(),
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: const EdgeInsets.fromLTRB(18, 6, 18, 110),
         itemCount: items.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        separatorBuilder: (_, _) => const SizedBox(height: 14),
         itemBuilder: (context, i) => ActivityCard(
           activity: items[i],
           // "我的"两个 Tab 可能同屏各有一份同 id 活动，Hero 会撞 tag
@@ -236,5 +234,28 @@ class _ProfilePageState extends State<ProfilePage> {
     if (ok == true && context.mounted) {
       await context.read<SessionState>().logout();
     }
+  }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: <Widget>[
+          Text(
+            value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppBrand.ink),
+          ),
+          const SizedBox(height: 3),
+          Text(label, style: const TextStyle(fontSize: 11.5, color: AppBrand.muted)),
+        ],
+      ),
+    );
   }
 }

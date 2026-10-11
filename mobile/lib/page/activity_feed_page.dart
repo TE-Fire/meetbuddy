@@ -39,25 +39,98 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
     final nickname = context.select<SessionState, String>((s) => s.me?.nickname ?? '');
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('$nickname，附近有什么'),
-        actions: <Widget>[
-          IconButton(
-            tooltip: state.geoEnabled ? '关闭就近筛选' : '开启就近筛选（演示坐标：国贸）',
-            onPressed: () => state.setGeo(!state.geoEnabled),
-            icon: Icon(
-              state.geoEnabled ? Icons.my_location : Icons.location_searching,
-              color: state.geoEnabled ? Theme.of(context).colorScheme.primary : null,
+      backgroundColor: Colors.transparent,
+      body: SkyBackground(
+        child: Column(
+          children: <Widget>[
+            SafeArea(
+              bottom: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _topNav(context, state),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(22, 6, 22, 14),
+                    child: DisplayHeading(
+                      lead: '附近有什么',
+                      highlight: '好局',
+                      subtitle: nickname.isEmpty ? '同城组局 · 找个搭子' : '$nickname · 同城组局，找个搭子',
+                      size: 27,
+                      align: TextAlign.left,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                  ),
+                  _filterBar(context, state),
+                  if (state.geoEnabled) _radiusBar(context, state),
+                  const SizedBox(height: 10),
+                ],
+              ),
+            ),
+            Expanded(child: _body(context, state)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 顶部：城市 + 搜索胶囊。搜索不做真实检索（后端还没有全文检索接口），
+  /// 点了只提示一句，保证"有入口但不假装能用"。
+  Widget _topNav(BuildContext context, ActivityState state) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
+      child: Row(
+        children: <Widget>[
+          const Text(
+            '上海',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppBrand.ink),
+          ),
+          const SizedBox(width: 3),
+          const Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: AppBrand.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: PressableScale(
+              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('搜索还在路上，先用下面的分类逛逛')),
+              ),
+              child: Container(
+                height: 42,
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: AppBrand.cardSm,
+                ),
+                child: const Row(
+                  children: <Widget>[
+                    Icon(Icons.search_rounded, size: 17, color: AppBrand.muted),
+                    SizedBox(width: 8),
+                    Text(
+                      '搜活动、搜搭子',
+                      style: TextStyle(fontSize: 13, color: AppBrand.muted),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ],
-      ),
-      body: Column(
-        children: <Widget>[
-          _filterBar(context, state),
-          if (state.geoEnabled) _radiusBar(context, state),
-          const SizedBox(height: 4),
-          Expanded(child: _body(context, state)),
+          const SizedBox(width: 10),
+          PressableScale(
+            onTap: () => state.setGeo(!state.geoEnabled),
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: state.geoEnabled ? AppBrand.primary : Colors.white,
+                borderRadius: BorderRadius.circular(999),
+                boxShadow: state.geoEnabled ? AppBrand.glow : AppBrand.cardSm,
+              ),
+              child: Icon(
+                state.geoEnabled ? Icons.my_location_rounded : Icons.location_searching_rounded,
+                size: 19,
+                color: state.geoEnabled ? Colors.white : AppBrand.muted,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -65,10 +138,10 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
 
   Widget _filterBar(BuildContext context, ActivityState state) {
     return SizedBox(
-      height: 46,
+      height: 42,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         children: <Widget>[
           CategoryChip(
             label: '全部',
@@ -87,47 +160,55 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
   }
 
   Widget _radiusBar(BuildContext context, ActivityState state) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: scheme.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: <Widget>[
-          Icon(Icons.place, size: 16, color: scheme.primary),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              '演示坐标：北京国贸 · 半径 ${state.radius.toStringAsFixed(0)} km',
-              style: TextStyle(fontSize: 12.5, color: scheme.primary),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: AppBrand.primarySoft,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: <Widget>[
+            const Icon(Icons.place_rounded, size: 16, color: AppBrand.primaryDeep),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                '演示坐标：北京国贸 · 半径 ${state.radius.toStringAsFixed(0)} km',
+                style: const TextStyle(fontSize: 12.5, color: AppBrand.primaryDeep),
+              ),
             ),
-          ),
-          PopupMenuButton<double>(
-            initialValue: state.radius,
-            tooltip: '选择半径',
-            onSelected: state.setRadius,
-            itemBuilder: (_) => <PopupMenuEntry<double>>[
-              for (final r in _radii)
-                PopupMenuItem<double>(value: r, child: Text('${r.toStringAsFixed(0)} km')),
-            ],
-            child: Row(
-              children: <Widget>[
-                Text('改半径', style: TextStyle(fontSize: 12.5, color: scheme.primary, fontWeight: FontWeight.w600)),
-                Icon(Icons.arrow_drop_down, size: 18, color: scheme.primary),
+            PopupMenuButton<double>(
+              initialValue: state.radius,
+              tooltip: '选择半径',
+              onSelected: state.setRadius,
+              itemBuilder: (_) => <PopupMenuEntry<double>>[
+                for (final r in _radii)
+                  PopupMenuItem<double>(value: r, child: Text('${r.toStringAsFixed(0)} km')),
               ],
+              child: const Row(
+                children: <Widget>[
+                  Text(
+                    '改半径',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: AppBrand.primaryDeep,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Icon(Icons.arrow_drop_down, size: 18, color: AppBrand.primaryDeep),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _body(BuildContext context, ActivityState state) {
     if (state.feed.isEmpty && state.loading) {
-      return const SingleChildScrollView(child: SkeletonList(rows: 5));
+      return const SingleChildScrollView(child: SkeletonList(rows: 3));
     }
     if (state.feed.isEmpty && state.error != null) {
       return ErrorView(message: state.error!, onRetry: () => state.loadFeed());
@@ -143,9 +224,9 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
     return RefreshIndicator(
       onRefresh: () => state.loadFeed(),
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+        padding: const EdgeInsets.fromLTRB(18, 4, 18, 118),
         itemCount: state.feed.length + 1,
-        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        separatorBuilder: (_, _) => const SizedBox(height: 16),
         itemBuilder: (context, i) {
           if (i == state.feed.length) {
             return LoadMoreFooter(

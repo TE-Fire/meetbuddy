@@ -82,6 +82,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
   Widget build(BuildContext context) {
     final a = _activity;
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('活动详情'),
         actions: <Widget>[
@@ -94,11 +95,14 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                         () => context.read<AppScope>().activity.favorite(a.id, on: !a.favorited),
                         a.favorited ? '已取消收藏' : '已收藏',
                       ),
-              icon: Icon(a.favorited ? Icons.star : Icons.star_border),
+              icon: Icon(
+                a.favorited ? Icons.star : Icons.star_border,
+                color: a.favorited ? const Color(0xFFF5A623) : null,
+              ),
             ),
         ],
       ),
-      body: _body(context),
+      body: SkyBackground(height: 300, child: _body(context)),
       bottomNavigationBar: a == null ? null : _bottomBar(context, a),
     );
   }
@@ -111,148 +115,207 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
       return ErrorView(message: _error!, onRetry: _load);
     }
     final a = _activity!;
-    final scheme = Theme.of(context).colorScheme;
-    final visual = CategoryVisual.of(a.category);
 
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: <Widget>[
         // Hero 封面：从列表卡片无缝放大进场
-        Container(
-          margin: const EdgeInsets.fromLTRB(16, 8, 16, 18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: AppBrand.card,
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(22),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 6, 18, 18),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppBrand.rLg),
+              boxShadow: AppBrand.card,
+            ),
             child: Hero(
               tag: 'activity-cover-${a.id}',
-              child: SizedBox(
-                height: 172,
-                child: Stack(
-                  children: <Widget>[
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(gradient: visual.gradient),
-                      ),
-                    ),
-                    Positioned(
-                      right: -34,
-                      top: -34,
-                      child: Blob(size: 140, color: Colors.white.withValues(alpha: 0.16)),
-                    ),
-                    Positioned(
-                      left: -24,
-                      bottom: -44,
-                      child: Blob(size: 160, color: Colors.white.withValues(alpha: 0.12)),
-                    ),
-                    Center(child: Icon(visual.icon, size: 64, color: Colors.white)),
-                  ],
-                ),
+              child: ActivityCover(
+                category: a.category,
+                coverUrl: a.coverUrl,
+                height: 190,
+                radius: AppBrand.rLg,
+                badge: a.status == 'OPEN' ? '🔥 热门局' : a.statusLabel,
+                badgeColor: a.status == 'OPEN' ? AppBrand.black : const Color(0xFFB26A00),
+                pins: <MapPinSpec>[
+                  MapPinSpec(
+                    a.slotsLeft > 0 ? '还差 ${a.slotsLeft} 人' : '已满员',
+                    0.30,
+                    0.30,
+                    accent: true,
+                  ),
+                ],
+                stickerAngle: 0.16,
               ),
             ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
                 a.title,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, height: 1.3, color: AppBrand.ink),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  height: 1.32,
+                  color: AppBrand.ink,
+                ),
               ),
-              const SizedBox(height: 10),
-              Row(
+              const SizedBox(height: 8),
+              Text(
+                '${a.organizerNickname ?? '匿名用户'} 发起 · ${_fmt(a.startTime)}',
+                style: const TextStyle(fontSize: 13, color: AppBrand.muted),
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: <Widget>[
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: visual.color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(a.category, style: TextStyle(fontSize: 12.5, color: visual.color, fontWeight: FontWeight.w700)),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    a.statusLabel,
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _statusColor(a.status)),
-                  ),
-                  if (a.creditRequired > 0) ...<Widget>[
-                    const SizedBox(width: 8),
-                    Text('信用分 ≥ ${a.creditRequired}', style: const TextStyle(fontSize: 12.5, color: AppBrand.muted)),
-                  ],
+                  SoftTag(a.category, tone: SoftTagTone.grass),
+                  SoftTag(a.statusLabel, tone: SoftTagTone.sky),
+                  if (a.creditRequired > 0) SoftTag('信用分 ≥ ${a.creditRequired}'),
                 ],
               ),
               const SizedBox(height: 18),
-              _InfoTile(icon: Icons.schedule_rounded, label: '时间', value: '${_fmt(a.startTime)} — ${_fmt(a.endTime, withDate: false)}'),
-              _InfoTile(icon: Icons.place_rounded, label: '地点', value: a.address),
-              _InfoTile(
-                icon: Icons.group_rounded,
-                label: '名额',
-                value: '${a.currentParticipants}/${a.maxParticipants}'
-                    '${a.slotsLeft > 0 ? '（还剩 ${a.slotsLeft} 个）' : '（已满）'}',
-              ),
-              if (a.tags.isNotEmpty)
-                _InfoTile(icon: Icons.local_offer_rounded, label: '标签', value: a.tags.join(' · ')),
-              const SizedBox(height: 10),
-              const Divider(),
-              const SizedBox(height: 16),
 
-              if ((a.description ?? '').isNotEmpty) ...<Widget>[
-                const SectionHeader('活动介绍'),
-                const SizedBox(height: 10),
-                Text(a.description!, style: const TextStyle(fontSize: 14.5, height: 1.8, color: Color(0xFF4A5068))),
-                const SizedBox(height: 20),
-              ],
-
-              const SectionHeader('组织者'),
-              const SizedBox(height: 10),
-              Row(
-                children: <Widget>[
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: scheme.primary.withValues(alpha: 0.14),
-                    child: Text((a.organizerNickname ?? '?').characters.first,
-                        style: TextStyle(color: scheme.primary, fontWeight: FontWeight.w700)),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(a.organizerNickname ?? '匿名用户', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                        if (a.organizer)
-                          Text('就是你', style: TextStyle(fontSize: 12, color: scheme.outline)),
-                      ],
+              // 信息卡：白底大圆角，行与行之间细线分隔
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppBrand.rLg),
+                  boxShadow: AppBrand.card,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Column(
+                  children: <Widget>[
+                    _InfoRow(
+                      icon: Icons.schedule_rounded,
+                      title: '${_fmt(a.startTime)} — ${_fmt(a.endTime, withDate: false)}',
+                      sub: _durationText(a),
                     ),
-                  ),
-                  if (a.organizer) const _OwnerBadge(),
-                ],
+                    _InfoRow(
+                      icon: Icons.place_rounded,
+                      title: a.address,
+                      sub: '集合点以群内通知为准',
+                      tone: SoftTagTone.grass,
+                    ),
+                    _InfoRow(
+                      icon: Icons.group_rounded,
+                      title: '${a.currentParticipants}/${a.maxParticipants}'
+                          '${a.slotsLeft > 0 ? ' · 还剩 ${a.slotsLeft} 个名额' : ' · 已满'}',
+                      sub: '报名后自动进群，方便对时间和地点',
+                      tone: SoftTagTone.warm,
+                    ),
+                    if (a.tags.isNotEmpty)
+                      _InfoRow(
+                        icon: Icons.local_offer_rounded,
+                        title: a.tags.join(' · '),
+                        sub: '发起人贴的标签',
+                        last: true,
+                      )
+                    else
+                      _InfoRow(
+                        icon: Icons.shield_moon_outlined,
+                        title: '无门槛或门槛见上方',
+                        sub: '信用分不足会被拒绝报名',
+                        last: true,
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(height: 22),
 
-              SectionHeader('已报名 ${a.participants.length} 人'),
+              if ((a.description ?? '').isNotEmpty) ...<Widget>[
+                const SectionHeader('活动介绍'),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppBrand.rMd),
+                    boxShadow: AppBrand.cardSm,
+                  ),
+                  child: Text(
+                    a.description!,
+                    style: const TextStyle(fontSize: 14.5, height: 1.85, color: AppBrand.ink2),
+                  ),
+                ),
+                const SizedBox(height: 22),
+              ],
+
+              const SectionHeader('组织者'),
               const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppBrand.rMd),
+                  boxShadow: AppBrand.cardSm,
+                ),
+                child: Row(
+                  children: <Widget>[
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: const BoxDecoration(
+                        gradient: AppBrand.brand,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        (a.organizerNickname ?? '?').characters.first,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            a.organizerNickname ?? '匿名用户',
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                          ),
+                          if (a.organizer)
+                            const Text(
+                              '就是你',
+                              style: TextStyle(fontSize: 12, color: AppBrand.muted),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (a.organizer) const _OwnerBadge(),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              SectionHeader(
+                '已报名 ${a.participants.length} 人',
+                trailing: Text(
+                  '上限 ${a.maxParticipants} 人',
+                  style: const TextStyle(fontSize: 12, color: AppBrand.muted),
+                ),
+              ),
+              const SizedBox(height: 14),
               if (a.participants.isEmpty)
-                Text('还没有人报名，你是第一个也说不定', style: TextStyle(fontSize: 13.5, color: scheme.outline))
+                Text(
+                  '还没有人报名，你是第一个也说不定',
+                  style: TextStyle(fontSize: 13.5, color: Theme.of(context).colorScheme.outline),
+                )
               else
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
                   children: <Widget>[
-                    for (final p in a.participants)
-                      Chip(
-                        avatar: CircleAvatar(
-                          backgroundColor: scheme.primary.withValues(alpha: 0.14),
-                          child: Text(p.nickname.characters.first,
-                              style: TextStyle(fontSize: 12, color: scheme.primary, fontWeight: FontWeight.w700)),
-                        ),
-                        label: Text('${p.nickname}·${p.creditScore}'),
-                        side: BorderSide(color: scheme.outlineVariant),
-                        backgroundColor: Colors.white,
-                      ),
+                    for (final p in a.participants) _ParticipantPill(nickname: p.nickname, credit: p.creditScore),
                   ],
                 ),
             ],
@@ -264,21 +327,24 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
 
   Widget _bottomBar(BuildContext context, Activity a) {
     final scope = context.read<AppScope>();
-    final scheme = Theme.of(context).colorScheme;
 
     final List<Widget> buttons = <Widget>[];
 
     if (a.hasGroup) {
       buttons.add(
         Expanded(
-          child: OutlinedButton.icon(
+          flex: 2,
+          child: GhostButton(
+            text: a.signedUp || a.organizer ? '进入群聊' : '看看群聊',
+            icon: Icons.forum_outlined,
+            height: 50,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (_) => ChatRoomPage(groupId: a.groupId!, title: a.title),
+                // 活动已取消/结束时直接把输入框置灰（M4 的 readonly 语义），
+                // 不必等用户发一条被 3104 拒回来才知道
+                builder: (_) => ChatRoomPage(groupId: a.groupId!, title: a.title, readonly: a.isClosed),
               ),
             ),
-            icon: const Icon(Icons.forum_outlined, size: 18),
-            label: Text(a.signedUp || a.organizer ? '进入群聊' : '看看群聊'),
           ),
         ),
       );
@@ -289,7 +355,8 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
         Expanded(
           flex: 2,
           child: PrimaryButton(
-            text: '报名参加（还差 ${a.slotsLeft} 人）',
+            text: '报名参加',
+            height: 50,
             onPressed: _acting ? null : () => _act(() => scope.activity.signUp(a.id), '报名成功，已加入群聊'),
             busy: _acting,
           ),
@@ -301,7 +368,12 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
           flex: 2,
           child: OutlinedButton(
             onPressed: _acting ? null : () => _act(() => scope.activity.cancelSignUp(a.id), '已取消报名'),
-            style: OutlinedButton.styleFrom(foregroundColor: scheme.error, minimumSize: const Size.fromHeight(48)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: Colors.white,
+              minimumSize: const Size(0, 50),
+              side: const BorderSide(color: AppBrand.line, width: 1.5),
+            ),
             child: const Text('取消报名'),
           ),
         ),
@@ -312,7 +384,12 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
           flex: 2,
           child: OutlinedButton(
             onPressed: _acting ? null : () => _confirmCancel(context, a),
-            style: OutlinedButton.styleFrom(foregroundColor: scheme.error, minimumSize: const Size.fromHeight(48)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: Colors.white,
+              minimumSize: const Size(0, 50),
+              side: const BorderSide(color: AppBrand.line, width: 1.5),
+            ),
             child: const Text('取消活动'),
           ),
         ),
@@ -323,6 +400,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
           flex: 2,
           child: PrimaryButton(
             text: a.status == 'FULL' ? '名额已满' : a.statusLabel,
+            height: 50,
             onPressed: null,
           ),
         ),
@@ -332,12 +410,14 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
     return SafeArea(
       top: false,
       child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 6, 12, 12),
-        padding: const EdgeInsets.all(10),
+        margin: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+        padding: const EdgeInsets.all(9),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: AppBrand.card,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: const <BoxShadow>[
+            BoxShadow(color: Color(0x1F1F6696), blurRadius: 30, offset: Offset(0, 14)),
+          ],
         ),
         child: Row(
           children: <Widget>[
@@ -369,12 +449,22 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
     await _act(() => context.read<AppScope>().activity.cancelActivity(a.id), '活动已取消，群聊转为只读');
   }
 
-  static Color _statusColor(String status) => switch (status) {
-        'OPEN' => const Color(0xFF22A45D),
-        'FULL' => const Color(0xFFB26A00),
-        'CANCELLED' => const Color(0xFFE5484D),
-        _ => AppBrand.muted,
-      };
+  static String _durationText(Activity a) {
+    final s = a.startTime;
+    final e = a.endTime;
+    if (s == null || e == null) {
+      return '时长待定';
+    }
+    final mins = e.difference(s).inMinutes;
+    if (mins <= 0) {
+      return '时长待定';
+    }
+    if (mins < 60) {
+      return '约 $mins 分钟';
+    }
+    final h = mins / 60;
+    return '约 ${h == h.roundToDouble() ? h.round() : h.toStringAsFixed(1)} 小时';
+  }
 
   static String _fmt(DateTime? t, {bool withDate = true}) {
     if (t == null) {
@@ -386,40 +476,99 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
   }
 }
 
-class _InfoTile extends StatelessWidget {
-  const _InfoTile({required this.icon, required this.label, required this.value});
+/// 信息行：左圆角图标 + 主文案 + 副文案。
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.icon,
+    required this.title,
+    required this.sub,
+    this.tone = SoftTagTone.sky,
+    this.last = false,
+  });
 
   final IconData icon;
-  final String label;
-  final String value;
+  final String title;
+  final String sub;
+  final SoftTagTone tone;
+  final bool last;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+    final (bg, fg) = switch (tone) {
+      SoftTagTone.sky => (AppBrand.primarySoft, AppBrand.primaryDeep),
+      SoftTagTone.grass => (AppBrand.grassSoft, const Color(0xFF4E8F3C)),
+      SoftTagTone.warm => (const Color(0xFFFFF3E8), const Color(0xFFC77A2A)),
+      SoftTagTone.plain => (const Color(0xFFF1F5F8), AppBrand.ink2),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        border: last ? null : const Border(bottom: BorderSide(color: AppBrand.line)),
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: AppBrand.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 17, color: AppBrand.primary),
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(13)),
+            child: Icon(icon, size: 19, color: fg),
           ),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 36,
-            child: Text(label, style: const TextStyle(fontSize: 13, color: AppBrand.muted)),
-          ),
+          const SizedBox(width: 13),
           Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 14, height: 1.5, fontWeight: FontWeight.w500, color: AppBrand.ink),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppBrand.ink),
+                ),
+                const SizedBox(height: 3),
+                Text(sub, style: const TextStyle(fontSize: 11.5, color: AppBrand.muted)),
+              ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 详情的报名人：小药丸（首字头像 + 昵称 + 信用分）。
+class _ParticipantPill extends StatelessWidget {
+  const _ParticipantPill({required this.nickname, required this.credit});
+
+  final String nickname;
+  final int credit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: AppBrand.cardSm,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            width: 26,
+            height: 26,
+            decoration: const BoxDecoration(gradient: AppBrand.brand, shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Text(
+              nickname.characters.first,
+              style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w800),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            nickname,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppBrand.ink),
+          ),
+          const SizedBox(width: 6),
+          Text('$credit', style: const TextStyle(fontSize: 11, color: AppBrand.muted)),
         ],
       ),
     );
@@ -433,21 +582,21 @@ class _DetailSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          SkeletonBox(height: 172, radius: 22),
+          SkeletonBox(height: 190, radius: 26),
           SizedBox(height: 18),
           SkeletonBox(width: 200, height: 22, radius: 8),
           SizedBox(height: 14),
           SkeletonBox(width: 130, height: 14, radius: 6),
           SizedBox(height: 22),
-          SkeletonBox(height: 52, radius: 14),
+          SkeletonBox(height: 68, radius: 20),
           SizedBox(height: 10),
-          SkeletonBox(height: 52, radius: 14),
+          SkeletonBox(height: 68, radius: 20),
           SizedBox(height: 10),
-          SkeletonBox(height: 52, radius: 14),
+          SkeletonBox(height: 68, radius: 20),
         ],
       ),
     );
@@ -459,14 +608,16 @@ class _OwnerBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: scheme.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        color: AppBrand.primarySoft,
+        borderRadius: BorderRadius.circular(999),
       ),
-      child: Text('我发起的', style: TextStyle(fontSize: 12, color: scheme.primary, fontWeight: FontWeight.w600)),
+      child: const Text(
+        '我发起的',
+        style: TextStyle(fontSize: 12, color: AppBrand.primaryDeep, fontWeight: FontWeight.w700),
+      ),
     );
   }
 }

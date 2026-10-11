@@ -112,206 +112,198 @@ class _LoginPageState extends State<LoginPage> {
     final needsPassword = _mode != _Mode.sms;
 
     return Scaffold(
-      body: Stack(
-        children: <Widget>[
-          const Positioned.fill(child: ColoredBox(color: AppBrand.bg)),
-          Positioned(
-            top: -120,
-            right: -80,
-            child: Blob(size: 280, color: AppBrand.primary.withValues(alpha: 0.14)),
-          ),
-          Positioned(
-            top: 130,
-            left: -110,
-            child: Blob(size: 260, color: AppBrand.secondary.withValues(alpha: 0.10)),
-          ),
-          Positioned(
-            bottom: -140,
-            right: -60,
-            child: Blob(size: 300, color: AppBrand.hot.withValues(alpha: 0.08)),
-          ),
-          SafeArea(
+      backgroundColor: AppBrand.skyTop,
+      body: SkyBackground(
+        height: 460,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 18, 24, 32),
             child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      StaggeredIn(
-                        index: 0,
-                        child: _logo(),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 430),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    StaggeredIn(
+                      index: 0,
+                      child: const Padding(
+                        padding: EdgeInsets.only(top: 10, bottom: 22),
+                        child: DisplayHeading(
+                          lead: '告别一个人',
+                          highlight: '组局出发',
+                          subtitle: '同城组局，找个搭子',
+                          size: 29,
+                          align: TextAlign.center,
+                        ),
                       ),
-                      const SizedBox(height: 28),
-                      StaggeredIn(
-                        index: 1,
-                        child: _modeSwitcher(),
+                    ),
+                    StaggeredIn(
+                      index: 1,
+                      child: const MapScene(
+                        height: 208,
+                        radius: 26,
+                        badge: '📍 周六 19:00 · 4 人成局',
+                        sticker: Icons.sports_esports_rounded,
+                        stickerSecond: Icons.sports_tennis_rounded,
+                        pins: <MapPinSpec>[
+                          MapPinSpec('飞盘局', 0.50, 0.20),
+                          MapPinSpec('桌游 4 缺 2', 0.10, 0.52, accent: true),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                      StaggeredIn(
-                        index: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: <Widget>[
+                    ),
+                    const SizedBox(height: 26),
+                    StaggeredIn(
+                      index: 2,
+                      child: _modeSwitcher(),
+                    ),
+                    const SizedBox(height: 18),
+                    StaggeredIn(
+                      index: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          TextField(
+                            controller: _phone,
+                            keyboardType: TextInputType.phone,
+                            decoration: const InputDecoration(
+                              labelText: '手机号',
+                              prefixIcon: Icon(Icons.phone_iphone_rounded, size: 20),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          if (_mode == _Mode.register) ...<Widget>[
                             TextField(
-                              controller: _phone,
-                              keyboardType: TextInputType.phone,
+                              controller: _nickname,
                               decoration: const InputDecoration(
-                                labelText: '手机号',
-                                prefixIcon: Icon(Icons.phone_iphone_rounded),
+                                labelText: '昵称',
+                                prefixIcon: Icon(Icons.badge_outlined, size: 20),
                               ),
                             ),
                             const SizedBox(height: 14),
-                            if (_mode == _Mode.register) ...<Widget>[
-                              TextField(
-                                controller: _nickname,
-                                decoration: const InputDecoration(
-                                  labelText: '昵称',
-                                  prefixIcon: Icon(Icons.badge_outlined),
-                                ),
+                          ],
+                          if (needsPassword)
+                            TextField(
+                              controller: _password,
+                              obscureText: true,
+                              onSubmitted: (_) => _submit(),
+                              decoration: const InputDecoration(
+                                labelText: '密码',
+                                prefixIcon: Icon(Icons.lock_outline_rounded, size: 20),
                               ),
-                              const SizedBox(height: 14),
-                            ],
-                            if (needsPassword)
-                              TextField(
-                                controller: _password,
-                                obscureText: true,
-                                onSubmitted: (_) => _submit(),
-                                decoration: const InputDecoration(
-                                  labelText: '密码',
-                                  prefixIcon: Icon(Icons.lock_outline_rounded),
-                                ),
-                              ),
-                            if (needsCode)
-                              Row(
-                                children: <Widget>[
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _code,
-                                      keyboardType: TextInputType.number,
-                                      decoration: const InputDecoration(
-                                        labelText: '验证码',
-                                        prefixIcon: Icon(Icons.sms_outlined),
-                                      ),
+                            ),
+                          if (needsCode)
+                            Row(
+                              children: <Widget>[
+                                Expanded(
+                                  child: TextField(
+                                    controller: _code,
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(
+                                      labelText: '验证码',
+                                      prefixIcon: Icon(Icons.sms_outlined, size: 20),
                                     ),
                                   ),
-                                  const SizedBox(width: 10),
-                                  SizedBox(
-                                    height: 52,
-                                    child: OutlinedButton(
-                                      onPressed: _countdown > 0 ? null : _sendCode,
-                                      child: Text(_countdown > 0 ? '${_countdown}s' : '获取验证码'),
+                                ),
+                                const SizedBox(width: 10),
+                                GhostButton(
+                                  text: _countdown > 0 ? '${_countdown}s' : '获取验证码',
+                                  height: 54,
+                                  onPressed: _countdown > 0 ? null : _sendCode,
+                                ),
+                              ],
+                            ),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeOut,
+                            alignment: Alignment.topCenter,
+                            child: _error == null
+                                ? const SizedBox(height: 16)
+                                : Container(
+                                    margin: const EdgeInsets.only(top: 16),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                                    decoration: BoxDecoration(
+                                      color: scheme.error.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(14),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            AnimatedSize(
-                              duration: const Duration(milliseconds: 220),
-                              curve: Curves.easeOut,
-                              alignment: Alignment.topCenter,
-                              child: _error == null
-                                  ? const SizedBox(height: 14)
-                                  : Container(
-                                      margin: const EdgeInsets.only(top: 14),
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        color: scheme.error.withValues(alpha: 0.08),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Row(
-                                        children: <Widget>[
-                                          Icon(Icons.error_outline_rounded, size: 18, color: scheme.error),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              _error!,
-                                              style: TextStyle(fontSize: 13, color: scheme.error),
-                                            ),
+                                    child: Row(
+                                      children: <Widget>[
+                                        Icon(Icons.error_outline_rounded, size: 18, color: scheme.error),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            _error!,
+                                            style: TextStyle(fontSize: 13, color: scheme.error),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
-                            ),
-                            const SizedBox(height: 16),
-                            PrimaryButton(
-                              text: _mode == _Mode.register ? '注册并登录' : '登录',
-                              onPressed: session.busy ? null : _submit,
-                              busy: session.busy,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      StaggeredIn(
-                        index: 3,
-                        child: Column(
-                          children: <Widget>[
-                            Center(
-                              child: Text(
-                                scope.usingMock ? '数据源：内存假数据' : '数据源：${Env.apiBase}',
-                                style: const TextStyle(fontSize: 12, color: AppBrand.muted),
-                              ),
-                            ),
-                            if (scope.usingMock)
-                              const Padding(
-                                padding: EdgeInsets.only(top: 6),
-                                child: Center(
-                                  child: Text(
-                                    '演示账号 13800000001 / 123456，验证码固定 123456',
-                                    style: TextStyle(fontSize: 12, color: AppBrand.muted),
                                   ),
+                          ),
+                          PrimaryButton(
+                            text: _mode == _Mode.register ? '注册并登录' : '登录',
+                            onPressed: session.busy ? null : _submit,
+                            busy: session.busy,
+                          ),
+                          const SizedBox(height: 12),
+                          GhostButton(
+                            text: '微信一键登录',
+                            icon: Icons.chat_bubble_rounded,
+                            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('微信登录接入还在路上，先用手机号')),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Center(
+                            child: Text(
+                              '登录即代表同意 用户协议 与 隐私政策',
+                              style: TextStyle(fontSize: 11, color: AppBrand.muted),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    StaggeredIn(
+                      index: 4,
+                      child: Column(
+                        children: <Widget>[
+                          Center(
+                            child: Text(
+                              scope.usingMock ? '数据源：内存假数据' : '数据源：${Env.apiBase}',
+                              style: const TextStyle(fontSize: 12, color: AppBrand.muted),
+                            ),
+                          ),
+                          if (scope.usingMock)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 6),
+                              child: Center(
+                                child: Text(
+                                  '演示账号 13800000001 / 123456，验证码固定 123456',
+                                  style: TextStyle(fontSize: 12, color: AppBrand.muted),
                                 ),
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _logo() {
-    return Row(
-      children: <Widget>[
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            gradient: AppBrand.brand,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: AppBrand.glow,
-          ),
-          child: const Center(child: Icon(Icons.handshake_rounded, size: 30, color: Colors.white)),
-        ),
-        const SizedBox(width: 14),
-        const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              '搭子',
-              style: TextStyle(fontSize: 27, fontWeight: FontWeight.w800, color: AppBrand.ink, letterSpacing: -0.5),
-            ),
-            Text('同城组局，找个搭子', style: TextStyle(fontSize: 13, color: AppBrand.muted)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  /// 自定义分段切换。滑动的白色滑块替代 SegmentedButton 的方盒感。
+  /// 自定义分段切换。滑动的黑色药丸替代 SegmentedButton 的方盒感。
   Widget _modeSwitcher() {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFE9ECF6),
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: AppBrand.cardSm,
       ),
       child: Row(
         children: <Widget>[
@@ -330,19 +322,16 @@ class _LoginPageState extends State<LoginPage> {
                     curve: Curves.easeOut,
                     padding: const EdgeInsets.symmetric(vertical: 11),
                     decoration: BoxDecoration(
-                      color: _mode == m ? Colors.white : Colors.transparent,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: _mode == m
-                          ? const <BoxShadow>[BoxShadow(color: Color(0x1E1B2B4D), blurRadius: 8, offset: Offset(0, 2))]
-                          : null,
+                      color: _mode == m ? AppBrand.black : Colors.transparent,
+                      borderRadius: BorderRadius.circular(999),
                     ),
                     child: Center(
                       child: AnimatedDefaultTextStyle(
                         duration: const Duration(milliseconds: 200),
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight: _mode == m ? FontWeight.w800 : FontWeight.w500,
-                          color: _mode == m ? AppBrand.ink : AppBrand.muted,
+                          fontWeight: _mode == m ? FontWeight.w800 : FontWeight.w600,
+                          color: _mode == m ? Colors.white : AppBrand.muted,
                         ),
                         child: Text(switch (m) {
                           _Mode.password => '密码登录',

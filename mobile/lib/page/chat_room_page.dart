@@ -150,22 +150,21 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   Widget _readonlyBanner(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: scheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFFFFF0F1),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: <Widget>[
-          Icon(Icons.lock_outline_rounded, size: 16, color: scheme.error),
+          Icon(Icons.lock_outline_rounded, size: 16, color: Theme.of(context).colorScheme.error),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               '活动已取消，群聊转为只读',
-              style: TextStyle(fontSize: 12.5, color: scheme.error),
+              style: TextStyle(fontSize: 12.5, color: Theme.of(context).colorScheme.error),
             ),
           ),
         ],
@@ -176,11 +175,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   Widget _inputBar(BuildContext context, bool readonly) {
     return SafeArea(
       child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
         padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(999),
           boxShadow: AppBrand.card,
         ),
         child: Row(
@@ -198,7 +197,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
               ),
             ),
@@ -208,13 +207,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 onTap: readonly ? null : _send,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    gradient: readonly ? null : AppBrand.brand,
-                    color: readonly ? const Color(0xFFC7CBDB) : null,
+                    color: readonly ? const Color(0xFFC7D0D8) : AppBrand.black,
                     shape: BoxShape.circle,
-                    boxShadow: readonly ? null : AppBrand.glow,
+                    boxShadow: readonly ? null : AppBrand.inkGlow,
                   ),
                   child: const Icon(Icons.send_rounded, size: 19, color: Colors.white),
                 ),

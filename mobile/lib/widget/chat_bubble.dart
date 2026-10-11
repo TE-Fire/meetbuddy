@@ -30,8 +30,8 @@ class ChatBubble extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
-              color: const Color(0xFFE9ECF5),
-              borderRadius: BorderRadius.circular(12),
+              color: const Color(0xFFE9F1F7),
+              borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
               message.content,
@@ -44,26 +44,25 @@ class ChatBubble extends StatelessWidget {
     }
 
     final bubble = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 11),
       decoration: BoxDecoration(
         gradient: mine ? AppBrand.brand : null,
         color: mine ? null : Colors.white,
         borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(16),
-          topRight: const Radius.circular(16),
-          bottomLeft: Radius.circular(mine ? 16 : 4),
-          bottomRight: Radius.circular(mine ? 4 : 16),
+          topLeft: const Radius.circular(AppBrand.rMd),
+          topRight: const Radius.circular(AppBrand.rMd),
+          bottomLeft: Radius.circular(mine ? AppBrand.rMd : 6),
+          bottomRight: Radius.circular(mine ? 6 : AppBrand.rMd),
         ),
-        border: mine ? null : Border.all(color: AppBrand.line),
         boxShadow: mine
-            ? <BoxShadow>[
+            ? const <BoxShadow>[
                 BoxShadow(
-                  color: AppBrand.primary.withValues(alpha: 0.28),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: Color(0x3D189BE0),
+                  blurRadius: 16,
+                  offset: Offset(0, 7),
                 ),
               ]
-            : null,
+            : AppBrand.cardSm,
       ),
       child: Text(
         message.content,

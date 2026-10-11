@@ -32,30 +32,23 @@ class _ChatListPageState extends State<ChatListPage> {
   @override
   Widget build(BuildContext context) {
     final chat = context.watch<ChatState>();
-    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('消息'),
         actions: <Widget>[
           Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Row(
-              children: <Widget>[
-                _Dot(on: chat.connected),
-                const SizedBox(width: 6),
-                Text(
-                  chat.connected ? '实时在线' : '连接中…',
-                  style: TextStyle(fontSize: 12.5, color: chat.connected ? const Color(0xFF1E8E3E) : scheme.outline),
-                ),
-              ],
-            ),
+            padding: const EdgeInsets.only(right: 18),
+            child: _ConnPill(on: chat.connected),
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () => chat.loadGroups(),
-        child: _body(context, chat),
+      body: SkyBackground(
+        child: RefreshIndicator(
+          onRefresh: () => chat.loadGroups(),
+          child: _body(context, chat),
+        ),
       ),
     );
   }
@@ -78,10 +71,53 @@ class _ChatListPageState extends State<ChatListPage> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(18, 6, 18, 110),
       itemCount: chat.groups.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (context, i) => _GroupTile(group: chat.groups[i]),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (context, i) => StaggeredIn(
+        index: i,
+        child: _GroupTile(group: chat.groups[i]),
+      ),
+    );
+  }
+}
+
+/// 连接状态胶囊：在线是草绿，掉线是灰。
+class _ConnPill extends StatelessWidget {
+  const _ConnPill({required this.on});
+
+  final bool on;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+      decoration: BoxDecoration(
+        color: on ? AppBrand.grassSoft : const Color(0xFFF1F5F8),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: on ? AppBrand.grassDeep : AppBrand.muted,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            on ? '实时在线' : '连接中…',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: on ? const Color(0xFF4E8F3C) : AppBrand.muted,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -93,80 +129,83 @@ class _GroupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StaggeredIn(
-      index: 0,
-      child: PressableScale(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => ChatRoomPage(groupId: group.id, title: group.name),
-          ),
+    return PressableScale(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ChatRoomPage(groupId: group.id, title: group.name),
         ),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: AppBrand.card,
-          ),
-          child: Row(
-            children: <Widget>[
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: AppBrand.brand,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: AppBrand.glow,
-                ),
-                child: const Icon(Icons.forum_rounded, color: Colors.white, size: 22),
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppBrand.rMd),
+          boxShadow: AppBrand.cardSm,
+        ),
+        child: Row(
+          children: <Widget>[
+            Container(
+              width: 50,
+              height: 50,
+              decoration: const BoxDecoration(
+                gradient: AppBrand.brand,
+                borderRadius: BorderRadius.all(Radius.circular(17)),
+                boxShadow: AppBrand.glow,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      group.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, color: AppBrand.ink),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      group.lastMessage ?? '还没有消息',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13, color: AppBrand.muted),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
+              child: const Icon(Icons.forum_rounded, color: Colors.white, size: 23),
+            ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  if (group.lastMessageAt != null)
-                    Text(_ago(group.lastMessageAt!), style: const TextStyle(fontSize: 11.5, color: AppBrand.muted)),
-                  const SizedBox(height: 6),
-                  if (group.unread > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppBrand.hot,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '${group.unread}',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
-                      ),
-                    )
-                  else
-                    Text('${group.memberCount} 人', style: const TextStyle(fontSize: 11.5, color: AppBrand.muted)),
+                  Text(
+                    group.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, color: AppBrand.ink),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    group.lastMessage ?? '还没有消息',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 13, color: AppBrand.muted),
+                  ),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                if (group.lastMessageAt != null)
+                  Text(
+                    _ago(group.lastMessageAt!),
+                    style: const TextStyle(fontSize: 11.5, color: AppBrand.muted),
+                  ),
+                const SizedBox(height: 7),
+                if (group.unread > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppBrand.hot,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      group.unread > 99 ? '99+' : '${group.unread}',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
+                    ),
+                  )
+                else
+                  Text(
+                    '${group.memberCount} 人',
+                    style: const TextStyle(fontSize: 11.5, color: AppBrand.muted),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -178,23 +217,5 @@ class _GroupTile extends StatelessWidget {
     if (d.inMinutes < 60) return '${d.inMinutes} 分钟前';
     if (d.inHours < 24) return '${d.inHours} 小时前';
     return '${d.inDays} 天前';
-  }
-}
-
-class _Dot extends StatelessWidget {
-  const _Dot({required this.on});
-
-  final bool on;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: on ? const Color(0xFF1E8E3E) : Theme.of(context).colorScheme.outlineVariant,
-      ),
-    );
   }
 }
