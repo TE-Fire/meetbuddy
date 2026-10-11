@@ -76,8 +76,8 @@ cd server/docker && docker compose up -d   # mb-redis，宿主端口 6380
 | ~~M0~~ ✅ | 仓库结构与文档 | `.gitignore` 覆盖三端；本 README 能指导启动 |
 | ~~M1~~ ✅ | 后端骨架 | 14 张表落地；注册/密码/验证码三通道登录拿 token；未带 token 访问受保护接口返回 401。实测 13 条用例全通，见 `server/README.md` |
 | ~~M2~~ ✅ | 活动与报名 | 发活动→报名→满员截止；100 并发抢 20 个名额实测恰好 20 人，无锁对照组超员 9 人。详见 `server/README.md` |
-| M3 | LBS 匹配 | Redis GEO 就近筛选 ✅；加权评分返回 Top N ✅；**压测 P95 时延 ⏳ 待补**（参考 `bench.py` 打 `/buddy/match`）。功能验收见 `server/README.md` |
-| M4 | 即时通信 | 单聊+群聊；断线重连补发离线消息；到达率可统计 |
+| ~~M3~~ ✅ | LBS 匹配 | Redis GEO 就近筛选 ✅；加权评分返回 Top N ✅；P95 时延压测 ✅（无竞争 P95 26.7ms，50 并发 719ms，五组对照见 `server/README.md`） |
+| ~~M4~~ ✅ | 即时通信 | 单聊+群聊 ✅；断线重连补发离线消息 ✅；到达率可统计 ✅（实时 0.667 / 最终 1.0）。21 项验收见 `server/README.md` |
 | M5 | Flutter 前端 | 浏览器中完整走通「发布→报名→进群聊」 |
 | M6 | 管理端 | 审核、封禁、看板可用 |
 | M7 | 实验与论文 | 三组实验出数据，落到论文章节 |
@@ -85,8 +85,12 @@ cd server/docker && docker compose up -d   # mb-redis，宿主端口 6380
 ## 常用命令
 
 ```bash
-# 后端
-cd server && mvn spring-boot:run
+# 后端（口令走 server/.env.local，由脚本注入；默认激活 dev profile）
+mvn -f server/pom.xml package -DskipTests
+bash server/run-local.sh                      # 默认 8099
+
+# 本地 Redis（GEO 需要 3.2+，本机 3.0 不行）
+cd server/docker && docker compose up -d      # mb-redis，宿主端口 6380
 
 # 移动端（浏览器预览）
 cd mobile && flutter run -d edge

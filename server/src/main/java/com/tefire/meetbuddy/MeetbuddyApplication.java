@@ -7,8 +7,14 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
+/**
+ * {@code @EnableScheduling} 给 M4 的心跳巡检用（每 30 秒扫一次，90 秒没心跳的连接踢掉），
+ * 后面活动状态推进的定时任务也挂在同一个调度器上。单机演示环境，不引调度中心。
+ */
 @SpringBootApplication
+@EnableScheduling
 @MapperScan("com.tefire.meetbuddy.mapper")
 public class MeetbuddyApplication {
 

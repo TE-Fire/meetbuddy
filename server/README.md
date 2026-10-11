@@ -2,9 +2,9 @@
 
 Spring Boot 3.2.5 + Java 21 + MyBatis-Plus 3.5.7 + Redis。
 
-## 当前进度：M3 就近匹配
+## 当前进度：M4 即时通信
 
-已完成：统一响应信封、全局异常处理、JWT 签发与校验、登录拦截器、账号密码与验证码双通道登录、全部 14 张表的建表脚本；活动发布/编辑/取消/详情/活动流/收藏、报名与取消报名、参与者与到场确认、信用分变动流水，以及报名并发防超员（Redis 分布式锁 + 数据库条件更新两层保障）；用户坐标上报与兴趣标签、搭子需求发布/关闭、基于 Redis GEO 的候选圈选与距离/标签/时间/信用四维加权排序、活动流按半径筛选。
+已完成：统一响应信封与错误码契约链、JWT 双令牌与登录拦截、账号密码与验证码双通道登录、全部 14 张表的建表脚本；活动发布/编辑/取消/活动流/收藏与报名、参与者与到场确认、信用分流水，以及报名并发防超员（Redis 分布式锁 + 条件更新两层保障）；用户坐标与兴趣标签、搭子需求发布/关闭、基于 Redis GEO 的四维加权匹配与半径筛选；M4 的即时通信——单聊与群聊消息落库并实时投递、`ack` 回执、断线重连补发离线消息、心跳保活与静默连接巡检、聊天历史与未读查询、投递到达率统计。
 
 ## 启动前置
 
@@ -121,6 +121,68 @@ M3 初版给 `radius` 加的是 `@Min(1) @Max(100)`，验收脚本按 `0.5 ~ 150
 - **`@Min/@Max` 不能拿来管 `double`**。它们声明的是 `long`，对小数只做整数比较，`0.5` 会被当成 `0` 直接拒掉。小数边界必须用 `@DecimalMin/@DecimalMax`，这是改成 0.5 下界时才暴露出来的。
 - 验收脚本也跟着改了：原先靠「上海→北京 1060km」演示远处排后，500km 上界下够不着，把 u3 挪到天津（107km），演示效果不变且更贴「同城 + 周边」的语义。
 
+### P95 时延压测（M3 验收的最后一格）
+
+脚本 `D:\_download\bench_match.py`，与 `bench.py` 同源：线程池 + `threading.Barrier` 造真并发。三个前提决定了数字能不能用——先灌 100 条需求当候选池（空索引上测到的是"一次空数组序列化"）；压测线程各自 keep-alive 复用连接（短连接会把 TCP 握手算进"匹配时延"）；先预热 30 次（JVM 前几百次走解释执行）。
+
+| 组 | 接口 | 候选池 | 并发 | 日志 | avg | P50 | P95 | P99 | 吞吐 |
+|---|---|---|---|---|---|---|---|---|---|
+| A | `/buddy/match` | 100 | 50 | debug | 407.0 | 396.8 | 718.8 | 972.5 | 77 req/s |
+| B | `/buddy/match` | 10 | 50 | debug | 294.6 | 287.2 | 508.9 | 605.4 | 90 req/s |
+| C | `/buddy/match` | 100 | **1** | debug | 22.9 | 22.5 | **26.7** | 29.7 | — |
+| D | `/buddy/match` | 100 | 50 | **info** | 389.4 | 355.7 | 779.9 | 980.2 | 77 req/s |
+| E | `/user/me`（对照） | — | 50 | debug | 155.2 | 146.1 | 310.6 | 365.2 | 185 req/s |
+
+单位毫秒。三组能读出三个结论：
+
+- **匹配算法本身不慢。** C 组把并发降到 1，P95 只有 26.7ms——整条链路是 1 次 `GEOSEARCH` + 4 次批量 SQL + 100 条内存算分排序，没有 N+1（`match` 用的是 `selectBatchIds` 批量查）。**论文要引"算法时延"就引这一行**，A 组的 719ms 是排队，不是计算。
+- **A 组的 719ms 是单机排队。** E 组拿最简接口（1 次 Redis `hasKey` + 1 次 DB）做对照，50 并发下也只有 185 req/s、P95 311ms——本机单实例的并发吞吐上限就在这个量级，JVM、MySQL、WSL2 里的 Redis 抢同一份 CPU，而 TE 这台机器本身 CPU 就紧。匹配接口的增量（多 1 次 Redis 往返、3 次 SQL、100 条算分）把 avg 从 155 抬到 407，占六成。
+- **两个嫌疑被排除。** B 组把候选池从 100 砍到 10，avg 只降 28%——DB 查询量不是主导；D 组把日志从 debug 调到 info，日志文件从 7.1MB 掉到 35KB，时延纹丝不动——同步写日志也不是瓶颈。
+
+复跑：`python bench_match.py`（默认 150 用户 / 100 需求 / 50 并发 / 20 轮）；换接口做对照用 `BENCH_PATH='/user/me' SKIP_SEED=1 python bench_match.py 60 0 50 20`。
+
+> 想再抬吞吐有三条路，都没动，等 TE 拍板：GEO 结果先按距离截断 Top-K 再查库；用户与标签挂 Redis 缓存；Tomcat 线程数与 Hikari 连接池调参。前两条会改变匹配语义（远处的潜在高分候选被截掉），第三条才是纯配置。
+
+## M4 验收用例与实测结果
+
+脚本 `D:\_download\m4_func.py`，**21 项全通**。标准库没有 WebSocket 客户端，而给这台机器装包要占磁盘，所以脚本里按 RFC 6455 手写了最小实现——客户端只需做两件服务端不做的事：握手带 `Sec-WebSocket-Key`、发出的每一帧都加掩码。
+
+| 用例 | 实测响应 |
+|---|---|
+| 发布活动返回 `groupId`，报名后进群且群列表可见 | `groupId=1`，群数 1 ✅ |
+| 握手回签 `Sec-WebSocket-Accept` 正确 | ✅ |
+| 群消息：发送者收到 `chat` + `ack`，`ack` 带 `msgId` | `msgId=1` ✅ |
+| 群消息：另一成员实时收到 | `content=群消息：明晚七点国贸` ✅ |
+| `heartbeat` → `pong` | ✅ |
+| 单聊且对方离线：仍先落库并回 `ack` | ✅ |
+| 离线方未读总数为 1 | `unread=1` ✅ |
+| 离线方重连时收到 `offline` 补发 | `type=offline n=1` ✅ |
+| 非群成员发群消息被拒 | `3101` ✅ |
+| 单聊 / 群聊历史可查 | `total=1` ✅ |
+| 取消活动后两个在线成员都收到 SYSTEM 通知 | `msgType=SYSTEM` ×2 ✅ |
+| 只读群拒绝发言 | `3104` ✅ |
+| `/chat/stats` 计数齐全且互相自洽 | 见下 ✅ |
+
+### 到达率：为什么拆成两个口径
+
+验收跑完那一刻 `/api/chat/stats` 的快照：
+
+```json
+{"accepted":3,"deliveredOnline":2,"queuedOffline":1,"replayed":1,"rejected":2,"acks":2,
+ "realtimeDeliveryRate":0.6667,"eventualDeliveryRate":1.0,"offlineBacklog":0,
+ "onlineConnections":3,"onlineUsers":3}
+```
+
+如果只报一个"到达率"，这个值会恒等于 100%（离线也算最终可达），没有信息量。拆成两个才有话说：**实时到达率 0.6667** 指"3 条消息里 2 条对方在线、当帧就送到了"；**最终到达率 1.0** 指"把重连补发算上，一条没丢"。前者掉、后者满，正是离线补发链路在干活的证据。数能对上账：`accepted=3`（群聊 1 + 单聊 1 + 取消通知 1）、`deliveredOnline=2`、`queuedOffline=1`（那条单聊的对方当时离线）、`replayed=1`（u3 重连补发），`offlineBacklog=0` 说明没有积压。
+
+### 设计上的几个选择
+
+- **未读口径分两套。** 单聊用 `message.read_status`（一条消息只有一个接收人）；群聊一条消息多人可见，一位 tinyint 记不下"谁读到哪"，改用 Redis 游标 `chat:read:{userId}:g{groupId}`，游标缺失时（刚入群）退回 `chat_group_member.joined_at` 兜底。这是 docs/02 "已读回执不逐条记录每人读到哪" 的落地方式——游标是每人每群一条，消息表不会因此膨胀。
+- **投递放在 Service 层，不在 Handler 里。** "落库 + 投递 + 计数"是同一件事的三个动作，拆两层会让 Handler 变厚，而且以后 HTTP 侧要加发消息接口时没地方复用。Handler 只管协议：认证、拆帧、回执。
+- **单聊也推给发送者自己。** 多端登录时手机发的消息网页端也要看到，口径与群聊广播保持一致；到达率只看对方那一侧，自己这份不计入 `deliveredOnline`。
+- **心跳的判据是"任何帧"**，不只是显式 `heartbeat`——连着发消息的人没必要再补心跳。巡检每 30 秒一次，静默超 90 秒踢掉。主动踢而不是只靠 TCP 的原因：客户端断网或进程被杀时不会发 close 帧，连接会一直挂在在线表里，消息投过去石沉大海，而发送方以为对方在线。
+- **一个用户挂多条连接**（手机 + 浏览器预览），发送前统一用 `ConcurrentWebSocketSessionDecorator` 包一层——群聊广播时多个线程会同时对同一个 session 调 `sendMessage`，不包会抛 `TEXT_PARTIAL_WRITING`。
+
 ## 异常处理：契约链
 
 错误码只有一条链路，业务代码里不允许出现裸数字：
@@ -161,14 +223,20 @@ Activity activity = BizAssert.notNull(activityMapper.selectById(id),
 
 ## 开发期登录
 
-`meetbuddy.dev.fixed-code-enabled: true` 时验证码固定为 `123456`，只写日志不下发真实短信。发布前必须关掉这个开关。
+固定验证码由 profile 隔离：`application.yml` 里 `meetbuddy.dev.fixed-code-enabled` 默认 `false`（生产语义），`application-dev.yml` 覆盖为 `true`。
+
+`run-local.sh` 默认激活 `dev`，所以本地起服务验证码恒为 `123456`、不下发真实短信。反过来验证这层隔离是否真的生效，用 prod 语义起一次即可：
+
+```bash
+MEETBUDDY_PROFILE=prod bash server/run-local.sh   # 此时 123456 应该登录失败
+```
 
 ## 遗留项（进 M4 之前该处理的）
 
 | 项 | 现状 | 打算怎么处理 |
 |---|---|---|
-| 固定验证码没有 profile 隔离 | `application.yml` 里写死 `true`，没有 profile 分离，任何方式启动都是固定码 | 发布或对外演示前改 `false`；正式做法是拆出 `application-dev.yml`，但那样所有启动脚本都要加 `--spring.profiles.active=dev`，留到 M4 一并做 |
-| M3 的 P95 时延压测没跑 | GEO 功能验收已全过，但 M3 的验收标准里还写着「压测 P95 时延」 | 沿用 M2 那套真并发脚本（`bench.py` 的线程池 + Barrier），换成打 `/buddy/match`，出一组 P95 |
+| WebSocket 放开了 Origin 校验 | `WebSocketConfig` 里 `setAllowedOriginPatterns("*")`，任何站点都能发起连接 | 上线前改成前端域名白名单 |
+| `/api/chat/stats` 只有登录门槛 | 单机演示的简化，任何登录用户都能读投递计数 | M6 做管理端时挪到 `/admin/**` 或加权限码 |
 | `Result` 没有 traceId | 校园市场的 `Result` 带 `traceId`（MDC 取），这边没有，排查时只能靠时间戳对 | 要加得配一个写入 MDC 的 Filter，属于独立一件事，不往这次改动里塞 |
 
 ## 踩过的坑

@@ -36,6 +36,17 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-redis</artifactId>
     </dependency>
+    <!-- M4 即时通信。用原生 WebSocket（不是 STOMP）：契约里帧格式是自己定的
+         （docs/03 第六节），STOMP 那套 destination/broker 语义反而要多写一层映射。 -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-websocket</artifactId>
+    </dependency>
+    <!-- JSON 输出，Spring Boot 3 起需要显式引入，见 docs/03 第六节的 chat 帧 -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>com.baomidou</groupId>

@@ -1,0 +1,11 @@
+# dev profile —— 本地开发专用，启动时加 --spring.profiles.active=dev 激活
+# （server/run-local.sh 默认就这么起，不用手动加）
+#
+# 这一层只放"允许开发期偷懒、但绝不能上生产"的开关。
+# application.yml 里所有此类开关的值都是生产态（关闭），由这里覆盖。
+
+meetbuddy:
+  dev:
+    # 验证码固定为 123456，不下发真实短信。
+    # 本地联调时最烦的就是每次注册都要去 Redis 里翻 sms:code:{phone}，固定码省掉这一步。
+    fixed-code-enabled: true

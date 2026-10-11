@@ -27,6 +27,7 @@ import com.tefire.meetbuddy.mapper.ChatGroupMemberMapper;
 import com.tefire.meetbuddy.mapper.FavoriteMapper;
 import com.tefire.meetbuddy.mapper.UserMapper;
 import com.tefire.meetbuddy.service.ActivityService;
+import com.tefire.meetbuddy.service.ChatService;
 import com.tefire.meetbuddy.util.GeoStore;
 import com.tefire.meetbuddy.vo.ActivityDetailVO;
 import com.tefire.meetbuddy.vo.ActivityVO;
@@ -63,6 +64,8 @@ public class ActivityServiceImpl implements ActivityService {
     private final FavoriteMapper favoriteMapper;
     private final UserMapper userMapper;
     private final GeoStore geoStore;
+    /** 取消活动时给群里发系统消息。ChatService 只依赖 mapper，不依赖 ActivityService，无循环 */
+    private final ChatService chatService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -231,7 +234,10 @@ public class ActivityServiceImpl implements ActivityService {
         activityMapper.updateById(activity);
         // 取消的活动不该再出现在别人的就近列表里
         geoStore.remove(GeoStore.ACTIVITY_KEY, activityId);
-        // 群不解散，改为只读；只读控制与离线推送在 M4 落地
+        // 群不解散，改为只读（发送时按活动状态拦截，见 ChatServiceImpl#assertGroupWritable），
+        // 同时给群里落一条 SYSTEM 消息并即时推送，别让人还在群里傻等
+        chatService.sendSystemToGroup(activity.getGroupId(), userId,
+                "活动「" + activity.getTitle() + "」已取消，本群转为只读");
     }
 
     @Override

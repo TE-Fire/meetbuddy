@@ -27,5 +27,10 @@ else
   exit 1
 fi
 
-# 本机直接 java -jar 时端口会被宿主环境顶掉（曾经落到 58061），显式指定更稳
-exec java -jar "$JAR" --server.port="${MEETBUDDY_SERVER_PORT:-8099}" "$@"
+# 本机直接 java -jar 时端口会被宿主环境顶掉（曾经落到 58061），显式指定更稳。
+# profile 默认 dev：固定验证码这类开发期开关都放在 application-dev.yml，
+# 不带 profile 启动就是生产语义（真发短信、真随机码）。
+exec java -jar "$JAR" \
+  --server.port="${MEETBUDDY_SERVER_PORT:-8099}" \
+  --spring.profiles.active="${MEETBUDDY_PROFILE:-dev}" \
+  "$@"
