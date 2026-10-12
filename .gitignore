@@ -77,6 +77,10 @@ admin/yarn.lock
 admin/pnpm-lock.yaml
 admin/.eslintcache
 
+# ---------- 小程序 miniprogram/ ----------
+# 微信开发者工具生成的本地私有配置（libVersion、urlCheck、编译热重载等按人不同）
+miniprogram/project.private.config.json
+
 # ---------- 本地中间件（server/docker） ----------
 # 端口与数据目录人人不同，仓库里只留 .env.example
 server/docker/.env
