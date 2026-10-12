@@ -5,9 +5,9 @@
 #   bash server/run-local.sh              # 起在 8099
 #   bash server/run-local.sh --server.port=9000
 #
-# 之所以要这个脚本：application.yml 里的 MYSQL_PASSWORD / MEETBUDDY_REDIS_PASSWORD
-# 都是必填占位符（不带默认值），仓库里不留任何口令。单独 java -jar 而不先导出
-# 这两个变量会直接报 "Could not resolve placeholder"。
+# 之所以要这个脚本：application.yml 里的 MYSQL_PASSWORD 是必填占位符（不带默认值），
+# 仓库里不留任何口令。单独 java -jar 而不先导出它，会直接报
+# "Could not resolve placeholder"。（Redis 本地无密码，不再需要变量。）
 set -euo pipefail
 
 cd "$(dirname "$0")"

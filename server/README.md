@@ -14,10 +14,10 @@ Spring Boot 3.2.5 + Java 21 + MyBatis-Plus 3.5.7 + Redis。
    mysql -u root -p < src/main/resources/db/schema.sql
    ```
 
-2. **配口令**。`application.yml` 里的 MySQL 与 Redis 口令都是**必填占位符、不带默认值**，仓库里不留任何明文：
+2. **配口令**。`application.yml` 里只剩 MySQL 口令是**必填占位符、不带默认值**，仓库里不留任何明文（Redis 本地走无密码，不再需要变量）：
 
    ```bash
-   cp server/.env.local.example server/.env.local   # 填 MYSQL_PASSWORD 等三项
+   cp server/.env.local.example server/.env.local   # 填 MYSQL_PASSWORD
    ```
 
    `.env.local` 已被 gitignore。漏配时启动会直接报 `Could not resolve placeholder 'MYSQL_PASSWORD'`。
@@ -28,7 +28,7 @@ Spring Boot 3.2.5 + Java 21 + MyBatis-Plus 3.5.7 + Redis。
    cd server/docker && docker compose up -d
    ```
 
-   详见 `server/docker/README.md`。容器口令来自 `server/docker/.env` 的 `REDIS_PASSWORD`，须与 `server/.env.local` 里的 `MEETBUDDY_REDIS_PASSWORD` 取同一个值。
+   详见 `server/docker/README.md`。本地容器不设 `requirepass`，应用侧同样不配 `password`，两端一致。
 
 ## 启动
 
@@ -37,7 +37,7 @@ mvn package -DskipTests
 bash server/run-local.sh                      # 默认起在 8099
 ```
 
-`run-local.sh` 做的就是：`set -a; . ./.env.local; set +a` 注入两个口令，再 `java -jar ... --server.port=8099`。想手动起就照这条链路自己导出 `MYSQL_PASSWORD` 与 `MEETBUDDY_REDIS_PASSWORD`。
+`run-local.sh` 做的就是：`set -a; . ./.env.local; set +a` 注入口令，再 `java -jar ... --server.port=8099`。想手动起就照这条链路自己导出 `MYSQL_PASSWORD`。
 
 **端口注意事项**：本机直接 `java -jar` 启动时，若日志出现 `Port 58061 was already in use`（该端口被宿主进程占用），显式指定端口即可——`run-local.sh` 已内置 `--server.port=8099`，传别的端口用 `bash server/run-local.sh --server.port=9000`。
 
@@ -261,5 +261,7 @@ Flutter Web 用浏览器预览，页面与后端不同源，**没有 CORS 映射
 - **同名 Bean 会直接让应用起不来**：分页插件已经在 `MeetbuddyApplication` 里注册过一次，再写一个 `MybatisPlusConfig` 会抛 `BeanDefinitionOverrideException`。
 - **`mvn compile` 不会更新 jar**，跑 `java -jar` 前必须 `mvn package`，否则打的是上一版的包（表现为新接口 404）。
 - **本机 Redis 是 3.0.504（微软 2016 的 Windows 移植版），没有 GEO 命令**。`GEOADD` 直接报 `unknown command`，所有依赖就近匹配的接口全返 `5000`。GEO 要 Redis ≥ 3.2。已改用 Docker 里的 `redis:7.2.3`（宿主端口 6380），见 `server/docker/README.md`。
+- **Redis 口令必须两端同口径，且"无密码"要整个删掉 `password` 键。** 曾经容器带 `--requirepass`、应用侧删了变量，后端起不来；后来统一成两侧都不设密码。留空串不等于无密码——Lettuce 仍会发 `AUTH ""`，报错和密码错一样。详见 `server/docker/README.md` 第七节。
+- **端口只认一个来源。** `application.yml` 的 `server.port` 是 `${MEETBUDDY_SERVER_PORT:8099}`；从 IDE 直接 Run（不带参数）时如果配置里写死别的端口，客户端全按 8099 打就会 `ERR_CONNECTION_REFUSED`——"后端启动成功"和"起在约定端口"是两件事。
 - **本机 3.0 的 `redis-cli` 不认 `--no-auth-warning`**（Redis 4.0 才加的参数），且它默认连 6379。脚本里改用 `docker exec mb-redis redis-cli`，直接用容器内的 7.2.3 客户端，版本和端口都不会错。
 - **GEO 命令底下就是 sorted set**，所以 `ZRANGE geo:user 0 -1` 能列出索引里的成员——验索引有没有写进去，用这个比 `GEOPOS` 方便。

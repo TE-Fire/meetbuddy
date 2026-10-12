@@ -5,7 +5,7 @@
 #
 # 端口与数据目录写在同目录的 .env 里（变量插值），改那里即可：
 #   DATA_ROOT   数据落盘根目录，默认 D:/docker/meetbuddy
-#   REDIS_PASSWORD  连接口令，仓库里只留占位符，真值在 .env（已 gitignore）
+#   REDIS_PORT  宿主端口，默认 6380
 #   本机已装 Redis 3.0.504 占 6379，且该版本不支持 GEO（3.2 才引入），
 #   故宿主机端口偏移到 6380，并整体换成 Redis 7.2.3
 #

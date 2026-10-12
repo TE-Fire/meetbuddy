@@ -10,11 +10,11 @@
 
 ## 二、前置检查（只需做一次）
 
-0. **先建 `.env`**。`.env` 已被 gitignore（本机端口、数据目录、口令人人不同），仓库里只有模板：
+0. **先建 `.env`**。`.env` 已被 gitignore（本机端口、数据目录、各人的路径不同），仓库里只有模板：
    ```bash
    cp .env.example .env
    ```
-   compose 里的 `${DATA_ROOT}` / `${REDIS_PORT}` / `${REDIS_PASSWORD}` 都取自它，缺了会报"变量未设置"、挂载路径错乱。**记得把模板里的 `REDIS_PASSWORD=change-me` 改成自己的口令**，并保持与 `server/.env.local` 里的 `MEETBUDDY_REDIS_PASSWORD` 一致。
+   compose 里的 `${DATA_ROOT}` / `${REDIS_PORT}` 都取自它，缺了会报"变量未设置"、挂载路径错乱。口令不需要配——本机开发两侧都不设密码。
 1. **Docker Desktop 允许挂载 D 盘**：Settings → Resources → File sharing，勾选 `D:\`。改完要 Apply & Restart。
 2. **端口没被占**：本机 6379 已被 Redis 3.0 占着，所以宿主端口用 **6380**。
 3. **本机剩下的服务不动**：6379 上原有的 Redis 3.0 照常运行。
@@ -48,27 +48,23 @@ docker compose ps                  # STATUS 出现 (healthy) 才算就绪
 
 Redis 秒起，不需要像 MySQL 那样等初始化。
 
-**应用侧的连接地址**（`server/src/main/resources/application.yml` 已改好）：宿主 `127.0.0.1:6380`，口令取 `.env` 里的 `REDIS_PASSWORD`（后端侧由 `server/.env.local` 的 `MEETBUDDY_REDIS_PASSWORD` 提供同一个值）。
+**应用侧的连接地址**（`server/src/main/resources/application.yml` 已改好）：宿主 `127.0.0.1:6380`，**无口令**——容器不设 `requirepass`，应用侧也不配 `password`，两端同口径。
 
-下面的命令都引用 `$REDIS_PASSWORD`，执行前先把 `.env` 载入当前 shell：
-
-```bash
-set -a; . ./.env; set +a
-```
+下面的验证命令都不带 `-a`，也不需要先把 `.env` 载入 shell。
 
 ## 六、如何验证运行状态
 
 ```bash
-# 基本连通（返回 PONG）；-a 会打印一句密码明文警告，属正常现象
-docker compose exec redis redis-cli -a "$REDIS_PASSWORD" ping
+# 基本连通（返回 PONG）
+docker compose exec redis redis-cli ping
 
 # 关键：确认 GEO 命令可用（本机 3.0 挂掉的就是这个）
-docker compose exec redis redis-cli -a "$REDIS_PASSWORD" GEOADD geo:smoke 116.4610 39.9088 probe
-docker compose exec redis redis-cli -a "$REDIS_PASSWORD" GEOPOS geo:smoke probe
-docker compose exec redis redis-cli -a "$REDIS_PASSWORD" del geo:smoke
+docker compose exec redis redis-cli GEOADD geo:smoke 116.4610 39.9088 probe
+docker compose exec redis redis-cli GEOPOS geo:smoke probe
+docker compose exec redis redis-cli del geo:smoke
 
 # 版本
-docker compose exec redis redis-cli -a "$REDIS_PASSWORD" info server | grep redis_version
+docker compose exec redis redis-cli info server | grep redis_version
 
 # 内存占用
 docker stats --no-stream
@@ -80,7 +76,7 @@ docker stats --no-stream
 
 ## 七、应用怎么连上来
 
-`application.yml` 里读环境变量，**不带默认值**（仓库不留明文，漏配即启动失败）：
+`application.yml` 里读环境变量，端口带默认值：
 
 ```yaml
 spring:
@@ -88,8 +84,10 @@ spring:
     redis:
       host: 127.0.0.1
       port: ${MEETBUDDY_REDIS_PORT:6380}
-      password: ${MEETBUDDY_REDIS_PASSWORD}
+      # 无 password 键
 ```
+
+**"无密码"必须把整个 `password` 键删掉，不能留空值或空串。** Lettuce 拿到空串仍会发一次 `AUTH ""`，服务端按"客户端发了认证但自己没配密码"拒绝，报错和密码写错一模一样（`RedisConnectionFailureException: Unable to connect to Redis`）——这条是踩过的，记录在此。
 
 变量名刻意带 `MEETBUDDY_` 前缀：沙箱曾自动往 java 进程注入 `SERVER_PORT`，端口类变量名被外部覆盖会静默连错实例（连回 6379 那个 3.0，GEO 又报错），加前缀防一手。
 
@@ -104,11 +102,11 @@ docker compose down          # 删容器，D 盘数据保留
 docker compose logs -f redis # 看日志
 
 # 清库重来（开发期最常用）
-docker compose exec redis redis-cli -a "$REDIS_PASSWORD" FLUSHALL
+docker compose exec redis redis-cli FLUSHALL
 
 # 只想清业务键，不动别的
-docker compose exec redis redis-cli -a "$REDIS_PASSWORD" --scan --pattern "sms:*" | \
-  xargs -r docker compose exec -T redis redis-cli -a "$REDIS_PASSWORD" del
+docker compose exec redis redis-cli --scan --pattern "sms:*" | \
+  xargs -r docker compose exec -T redis redis-cli del
 ```
 
 ## 九、已知事项
