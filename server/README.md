@@ -20,7 +20,15 @@ Spring Boot 3.2.5 + Java 21 + MyBatis-Plus 3.5.7 + Redis。
    cp server/.env.local.example server/.env.local   # 填 MYSQL_PASSWORD
    ```
 
-   `.env.local` 已被 gitignore。漏配时启动会直接报 `Could not resolve placeholder 'MYSQL_PASSWORD'`。
+   `.env.local` 已被 gitignore。**漏配时的现象很隐晦**：`spring.datasource.password` 走的是
+   `@ConfigurationProperties` 绑定，未解析的占位符会被**原样**当口令发出去，报的是
+   `Access denied for user 'root'@'localhost' (using password: YES)`，而不是“占位符无法解析”。
+   看到这句先确认口令有没有真的注进来，别急着改 MySQL 密码。
+
+   从 **IDE 直接 Run**（不走 `run-local.sh`）同样要拿到这份口令：`.vscode/launch.json` 的
+   `envFile` 指向 `server/.env.local`，`args` 带 `--spring.profiles.active=dev`，与
+   `run-local.sh` 行为对齐。换机器或重新生成该文件时照抄这两行，否则会出现上面那种
+   “Access denied”。
 
 3. **Redis** 需要在 `127.0.0.1:6380` 可用，**且只能是 3.2 以上**（GEO 命令要求）。**不要用本机 6379 上那个 3.0.504**。用 Docker 起 7.2.3：
 

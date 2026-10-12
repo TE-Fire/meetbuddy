@@ -5,9 +5,10 @@
 #   bash server/run-local.sh              # 起在 8099
 #   bash server/run-local.sh --server.port=9000
 #
-# 之所以要这个脚本：application.yml 里的 MYSQL_PASSWORD 是必填占位符（不带默认值），
-# 仓库里不留任何口令。单独 java -jar 而不先导出它，会直接报
-# "Could not resolve placeholder"。（Redis 本地无密码，不再需要变量。）
+# 之所以要这个脚本：application.yml 里的 MYSQL_PASSWORD 不带默认值，仓库里不留任何口令，
+# 只能由环境变量注入（Redis 本地无密码，不再需要变量）。
+# 注意漏配时**不会**报“占位符无法解析”——未解析的占位符会被原样当口令发出去，
+# 报的是 MySQL 的 Access denied ... (using password: YES)，容易误判。
 set -euo pipefail
 
 cd "$(dirname "$0")"

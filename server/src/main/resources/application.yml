@@ -15,9 +15,15 @@ spring:
     # "Unsupported character encoding 'utf8mb4'，这是 Connector/J 的一个常见坑
     url: "jdbc:mysql://127.0.0.1:3306/meetbuddy?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
     username: root
-    # 口令一律由环境变量注入，仓库不留明文、也不给默认值：
-    # 漏配时启动直接报 "Could not resolve placeholder 'MYSQL_PASSWORD'"，比连不上库更好定位。
-    # 本地开发用 server/run-local.sh，它读被 gitignore 的 server/.env.local。
+    # 口令一律由环境变量注入，仓库不留明文、也不给默认值。
+    # ⚠ 漏配时**不会**报“占位符无法解析”：@ConfigurationProperties 绑定走的是
+    #   PropertySourcesPlaceholdersResolver(ignoreUnresolvablePlaceholders=true)，
+    #   解析不到就原样保留字面量。也就是把 "${MYSQL_PASSWORD}" 这 17 个字符当口令
+    #   发给了 MySQL，现象是 Access denied for user 'root'@'localhost'
+    #   (using password: YES) —— 极易误判成“口令写错了”。
+    #   （实测：Binder 绑定未解析占位符返回的正是字面量本身。）
+    # 本地开发用 server/run-local.sh，它读被 gitignore 的 server/.env.local；
+    # 从 IDE 直接 Run 时，靠 .vscode/launch.json 的 envFile 指到同一个文件。
     password: ${MYSQL_PASSWORD}
   data:
     redis:
