@@ -77,7 +77,8 @@ Page({
       if (mode === 'password') {
         data = await api.post('/api/auth/login/password', { phone: phone.trim(), password });
       } else if (mode === 'sms') {
-        data = await api.post('/api/auth/sms/login', { phone: phone.trim(), smsCode: code.trim() });
+        // 注意：sms/login 的验证码字段名是 code，register 的是 smsCode，后端二者不同名
+        data = await api.post('/api/auth/sms/login', { phone: phone.trim(), code: code.trim() });
       } else {
         if (!nickname.trim()) {
           this.setData({ error: '给自己起个昵称吧', busy: false });
