@@ -26,8 +26,8 @@ spring:
       # 见 server/docker/README.md。变量名带 MEETBUDDY_ 前缀，避免被外部环境里同名的
       # REDIS_PORT 覆盖掉（沙箱曾自动注入过 SERVER_PORT，端口类变量名要防一手）
       port: ${MEETBUDDY_REDIS_PORT:6380}
-      # 同上，不写默认值，由 .env.local / 环境变量注入
-      password: ${MEETBUDDY_REDIS_PASSWORD}
+      # 本地开发用 Docker 里的 redis:7.2.3（见 server/docker），刻意不设密码——
+      # 本机单开发者、封闭网络，无密码需求；docker 容器与 Spring 两侧都不带密码最省事。
       database: 0
 
 mybatis-plus:
