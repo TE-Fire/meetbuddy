@@ -48,16 +48,19 @@
   font-size: 34rpx;
   flex-shrink: 0;
 }
-.iicon.sky {
+/* 图标底色用 ico- 前缀：写成 `.iicon sky` 会同时命中 app.wxss 里的全局 `.sky`
+   （那个类是页面天空底，带 min-height: 100vh），图标会被撑成一根通栏竖条。
+   全局类名一律不做修饰符，避免这种跨文件的静默串味。 */
+.iicon.ico-sky {
   background: var(--brand-soft);
 }
-.iicon.grass {
+.iicon.ico-grass {
   background: var(--grass-soft);
 }
-.iicon.warm {
+.iicon.ico-warm {
   background: var(--warm-bg);
 }
-.iicon.plain {
+.iicon.ico-plain {
   background: #f1f5f8;
 }
 .itx {

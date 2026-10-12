@@ -22,28 +22,28 @@
   <!-- 信息卡 -->
   <view class="card info">
     <view class="irow">
-      <view class="iicon sky">🗓️</view>
+      <view class="iicon ico-sky">🗓️</view>
       <view class="itx">
         <view class="t1">{{a.timeText}}</view>
         <view class="t2">以群内通知的集合时间为准</view>
       </view>
     </view>
     <view class="irow">
-      <view class="iicon grass">📍</view>
+      <view class="iicon ico-grass">📍</view>
       <view class="itx">
         <view class="t1">{{a.address}}</view>
         <view class="t2">集合点以群内通知为准</view>
       </view>
     </view>
     <view class="irow last">
-      <view class="iicon warm">👥</view>
+      <view class="iicon ico-warm">👥</view>
       <view class="itx">
         <view class="t1">{{a.currentParticipants}}/{{a.maxParticipants}}{{a.slotsLeft > 0 ? ' · 还剩 ' + a.slotsLeft + ' 个名额' : ' · 已满'}}</view>
         <view class="t2">报名后自动进群，方便对时间和地点</view>
       </view>
     </view>
     <view class="irow last" wx:if="{{a.tags && a.tags.length}}">
-      <view class="iicon plain">🏷️</view>
+      <view class="iicon ico-plain">🏷️</view>
       <view class="itx">
         <view class="t1">{{a.tags}}</view>
         <view class="t2">发起人贴的标签</view>

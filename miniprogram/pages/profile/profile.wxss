@@ -2,17 +2,6 @@
   padding: 30rpx 40rpx 220rpx;
   text-align: center;
 }
-.logout {
-  position: absolute;
-  right: 40rpx;
-  top: 0;
-  padding: 10rpx 24rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.7);
-  font-size: 23rpx;
-  font-weight: 700;
-  color: var(--muted);
-}
 .avatar {
   width: 172rpx;
   height: 172rpx;
@@ -78,14 +67,51 @@
   color: var(--muted);
 }
 
-.src {
-  display: inline-block;
-  margin-top: 26rpx;
-  padding: 14rpx 28rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.7);
-  font-size: 22rpx;
+/* 功能菜单卡：数据卡下面的入口组，照原型「我的」页的 menu-card 做。
+   行 = 彩色圆角图标 + 文字 + 右侧状态/计数 + 箭头，行间 1rpx 分隔线。 */
+.menu {
+  margin-top: 28rpx;
+  padding: 8rpx 36rpx;
+  text-align: left;
+}
+.mrow {
+  display: flex;
+  align-items: center;
+  gap: 26rpx;
+  padding: 28rpx 0;
+  border-bottom: 1rpx solid var(--line);
+  font-size: 29rpx;
+  font-weight: 700;
+  color: var(--ink);
+}
+.mrow:last-child {
+  border-bottom: none;
+}
+.mic {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  flex-shrink: 0;
+}
+.mtx {
+  flex: 1;
+  min-width: 0;
+}
+.mnum,
+.mstate {
+  font-size: 24rpx;
+  font-weight: 700;
   color: var(--muted);
+}
+.marr {
+  font-size: 34rpx;
+  font-weight: 900;
+  color: #c4d0da;
+  line-height: 1;
 }
 
 .section-title {

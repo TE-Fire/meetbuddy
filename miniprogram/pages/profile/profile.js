@@ -59,6 +59,22 @@ Page({
     wx.navigateTo({ url: `/pages/detail/detail?id=${e.currentTarget.dataset.id}` });
   },
 
+  /** 菜单卡前两行：数据就在本页下方，滚过去比再开一页少一步跳转 */
+  jumpTo(e) {
+    wx.pageScrollTo({ selector: `#${e.currentTarget.dataset.target}`, duration: 300 });
+  },
+
+  /** 数据源那一行点开显示真实地址——真机联调时能直接看清它连的是哪个 host */
+  showSource() {
+    const env = require('../../config/env');
+    wx.showModal({
+      title: '当前数据源',
+      content: `${env.apiBase}\n实时通道：${this.data.connected ? '已连接' : '未连接'}`,
+      showCancel: false,
+      confirmText: '知道了',
+    });
+  },
+
   async logout() {
     const res = await new Promise((resolve) => {
       wx.showModal({
