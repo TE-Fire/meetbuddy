@@ -12,7 +12,7 @@ function mapActivity(a, distanceKm) {
     timeBadge: fmt.timeBadge(a.startTime),
     isToday: (a.startTime || '').slice(0, 10) === new Date().toISOString().slice(0, 10),
     addrShort: fmt.shortAddr(distanceKm == null ? a.address : `${fmt.shortAddr(a.address)} · ${fmt.km(distanceKm)}`),
-    statusText: a.statusLabel || a.status,
+    statusText: fmt.statusLabel(a.status),
     statusTone: fmt.statusTone(a.status),
     ratio: a.maxParticipants > 0 ? Math.min(1, a.currentParticipants / a.maxParticipants) : 0,
     full: a.currentParticipants >= a.maxParticipants,

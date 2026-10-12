@@ -10,7 +10,7 @@ function decorate(a) {
     ...a,
     icon: CATEGORY_ICONS[a.category] || '✨',
     timeText: a.endTime ? `${start} — ${end}` : start,
-    statusText: a.statusLabel || a.status,
+    statusText: fmt.statusLabel(a.status),
     statusTone: fmt.statusTone(a.status),
     ratio: a.maxParticipants > 0 ? Math.min(1, a.currentParticipants / a.maxParticipants) : 0,
     full: a.currentParticipants >= a.maxParticipants,

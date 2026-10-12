@@ -56,6 +56,21 @@ function shortAddr(address) {
   return tail.length <= 14 ? tail : `${tail.slice(0, 13)}…`;
 }
 
+/**
+ * 状态 → 中文文案。后端 ActivityVO 只给 status 枚举，没有 statusLabel；
+ * Flutter 端是模型上的 getter 算的，这里必须同口径补一个，否则界面会漏出 OPEN/FULL。
+ */
+function statusLabel(status) {
+  const map = {
+    OPEN: '报名中',
+    FULL: '已满',
+    ONGOING: '进行中',
+    FINISHED: '已结束',
+    CANCELLED: '已取消',
+  };
+  return map[status] || status || '';
+}
+
 /** 状态 → 软标签色调 */
 function statusTone(status) {
   if (status === 'OPEN') return 'grass';
@@ -63,4 +78,4 @@ function statusTone(status) {
   return 'plain';
 }
 
-module.exports = { timeBadge, fmtTime, fmtHm, ago, km, shortAddr, statusTone, pad2 };
+module.exports = { timeBadge, fmtTime, fmtHm, ago, km, shortAddr, statusLabel, statusTone, pad2 };
