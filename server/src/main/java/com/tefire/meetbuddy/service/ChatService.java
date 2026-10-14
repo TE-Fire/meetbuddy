@@ -3,6 +3,7 @@ package com.tefire.meetbuddy.service;
 import com.tefire.meetbuddy.common.PageVO;
 import com.tefire.meetbuddy.vo.ChatGroupVO;
 import com.tefire.meetbuddy.vo.ChatMessageVO;
+import com.tefire.meetbuddy.vo.ChatSessionVO;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,9 @@ public interface ChatService {
 
     /** 单聊历史 */
     PageVO<ChatMessageVO> sessionMessages(Long userId, Long peerId, Long beforeId, long size);
+
+    /** 我的单聊会话列表：每个有过私聊的对方一项，带最后一条消息与未读数，按最近消息倒序 */
+    List<ChatSessionVO> mySessions(Long userId);
 
     /** 未读总数 = 单聊未读 + 各群未读 */
     long unreadTotal(Long userId);

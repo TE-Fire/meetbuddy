@@ -6,9 +6,20 @@ function decorate(g) {
   return { ...g, agoText: fmt.ago(g.lastMessageAt) };
 }
 
+function decorateSession(s) {
+  return {
+    ...s,
+    agoText: fmt.ago(s.lastMessageAt),
+    first: (s.peerNickname || '?')[0],
+    // 我发的最后一条加“我:”前缀，对方发的直接显示内容
+    lastText: (s.selfLast ? '我: ' : '') + (s.lastMessage || ''),
+  };
+}
+
 Page({
   data: {
     groups: [],
+    sessions: [],
     loading: true,
     connected: false,
   },
@@ -39,8 +50,15 @@ Page({
 
   async load() {
     try {
-      const groups = await api.get('/api/chat/groups');
-      this.setData({ groups: groups.map(decorate), loading: false });
+      const [groups, sessions] = await Promise.all([
+        api.get('/api/chat/groups'),
+        api.get('/api/chat/sessions'),
+      ]);
+      this.setData({
+        groups: groups.map(decorate),
+        sessions: sessions.map(decorateSession),
+        loading: false,
+      });
       // 未读总数喂给自定义 tab bar 的徽标
       try {
         const n = await api.get('/api/chat/unread');
@@ -61,6 +79,13 @@ Page({
     const g = e.currentTarget.dataset.g;
     wx.navigateTo({
       url: `/pages/chat-room/chat-room?groupId=${g.id}&title=${encodeURIComponent(g.name)}`,
+    });
+  },
+
+  openSession(e) {
+    const s = e.currentTarget.dataset.s;
+    wx.navigateTo({
+      url: `/pages/chat-room/chat-room?peerId=${s.peerId}&title=${encodeURIComponent(s.peerNickname || '私聊')}`,
     });
   },
 });

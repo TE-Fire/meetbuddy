@@ -6,6 +6,7 @@ import com.tefire.meetbuddy.common.UserContext;
 import com.tefire.meetbuddy.service.ChatService;
 import com.tefire.meetbuddy.vo.ChatGroupVO;
 import com.tefire.meetbuddy.vo.ChatMessageVO;
+import com.tefire.meetbuddy.vo.ChatSessionVO;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,12 @@ public class ChatController {
     @GetMapping("/groups")
     public Result<List<ChatGroupVO>> groups() {
         return Result.ok(chatService.myGroups(UserContext.getUserId()));
+    }
+
+    /** 我的单聊会话列表：每个有过私聊的对方一项，带最后一条与未读数，按最近消息倒序 */
+    @GetMapping("/sessions")
+    public Result<List<ChatSessionVO>> sessions() {
+        return Result.ok(chatService.mySessions(UserContext.getUserId()));
     }
 
     @GetMapping("/group/{id}/messages")

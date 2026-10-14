@@ -22,6 +22,7 @@ import com.tefire.meetbuddy.mapper.UserMapper;
 import com.tefire.meetbuddy.service.ChatService;
 import com.tefire.meetbuddy.vo.ChatGroupVO;
 import com.tefire.meetbuddy.vo.ChatMessageVO;
+import com.tefire.meetbuddy.vo.ChatSessionVO;
 import com.tefire.meetbuddy.ws.ChatMetrics;
 import com.tefire.meetbuddy.ws.ChatSessionRegistry;
 import lombok.RequiredArgsConstructor;
@@ -158,6 +159,48 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
+    public List<ChatSessionVO> mySessions(Long userId) {
+        // 所有涉及我的单聊消息（group_id 为 null）。演示库量级小，一次取回在内存里聚合；
+        // 真要大会话量，可按 peer 分组取 MAX(id) 后再回查，这里先不做这层优化。
+        List<Message> involved = messageMapper.selectList(new LambdaQueryWrapper<Message>()
+                .isNull(Message::getGroupId)
+                .and(w -> w.eq(Message::getSenderId, userId).or().eq(Message::getReceiverId, userId))
+                .orderByDesc(Message::getId));
+
+        // 按对方聚合：倒序遍历，每个 peer 第一次出现的就是最新一条；顺带统计我这一侧未读
+        Map<Long, Message> lastByPeer = new LinkedHashMap<>();
+        Map<Long, Integer> unreadByPeer = new LinkedHashMap<>();
+        for (Message m : involved) {
+            Long peer = userId.equals(m.getSenderId()) ? m.getReceiverId() : m.getSenderId();
+            lastByPeer.putIfAbsent(peer, m);
+            if (userId.equals(m.getReceiverId()) && m.getReadStatus() != null && m.getReadStatus() == 0) {
+                unreadByPeer.merge(peer, 1, Integer::sum);
+            }
+        }
+        if (lastByPeer.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Map<Long, User> peers = loadUsers(new ArrayList<>(lastByPeer.keySet()));
+
+        List<ChatSessionVO> result = new ArrayList<>();
+        for (Map.Entry<Long, Message> e : lastByPeer.entrySet()) {
+            Long peerId = e.getKey();
+            Message last = e.getValue();
+            User u = peers.get(peerId);
+            ChatSessionVO vo = new ChatSessionVO();
+            vo.setPeerId(peerId);
+            vo.setPeerNickname(u != null ? u.getNickname() : null);
+            vo.setPeerAvatar(u != null ? u.getAvatar() : null);
+            vo.setLastMessage(last.getContent());
+            vo.setLastMessageAt(last.getCreatedAt());
+            vo.setUnread(unreadByPeer.getOrDefault(peerId, 0));
+            vo.setSelfLast(userId.equals(last.getSenderId()));
+            result.add(vo);
+        }
+        return result;
+    }
+
+    @Override
     public long unreadTotal(Long userId) {
         long privateUnread = messageMapper.selectCount(new LambdaQueryWrapper<Message>()
                 .eq(Message::getReceiverId, userId)
@@ -283,10 +326,13 @@ public class ChatServiceImpl implements ChatService {
             return;
         }
         if (userId.equals(msg.getReceiverId())) {
+            // 单聊标到该条为止（含同一发件人更早的未读），与群聊游标“读到哪算到哪”同义：
+            // 进房间只 markRead 最新一条，之前连发的未读要一并清零，否则列表未读数假性残留。
             messageMapper.update(null, new LambdaUpdateWrapper<Message>()
                     .set(Message::getReadStatus, 1)
-                    .eq(Message::getId, msgId)
-                    .eq(Message::getReceiverId, userId));
+                    .eq(Message::getReceiverId, userId)
+                    .eq(Message::getSenderId, msg.getSenderId())
+                    .le(Message::getId, msgId));
         }
     }
 
