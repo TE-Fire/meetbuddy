@@ -5,6 +5,8 @@ const fmt = require('../../utils/format');
 Page({
   data: {
     groupId: 0,
+    peerId: 0,
+    peerName: '',
     title: '',
     readonly: false,
     connected: false,
@@ -15,8 +17,13 @@ Page({
   },
 
   onLoad(options) {
+    // 两种模式：groupId 群聊 / peerId 单聊。搭子匹配页的「私聊 TA」走后者，
+    // 后端 sendToUser 链路早已就绪，这里只补前端入口
+    const peerId = Number(options.peerId || 0);
     this.setData({
-      groupId: Number(options.groupId),
+      groupId: Number(options.groupId || 0),
+      peerId,
+      peerName: decodeURIComponent(options.peerName || ''),
       title: decodeURIComponent(options.title || ''),
       readonly: options.readonly === '1',
     });
@@ -37,7 +44,11 @@ Page({
 
   async loadHistory() {
     try {
-      const data = await api.get(`/api/chat/group/${this.data.groupId}/messages`, { size: 50 });
+      // 单聊走 session 接口，群聊走 group 接口；两者返回同一结构
+      const path = this.data.peerId
+        ? `/api/chat/session/${this.data.peerId}/messages`
+        : `/api/chat/group/${this.data.groupId}/messages`;
+      const data = await api.get(path, { size: 50 });
       const me = getApp().globalData.me;
       const raw = (data && data.list) || [];
       const messages = raw
@@ -70,6 +81,13 @@ Page({
     if (frame.type === 'chat' && frame.message && frame.message.groupId === this.data.groupId) {
       const m = this.decorate(frame.message, myId);
       const messages = this.data.messages.filter((x) => !x.pending || x.content !== m.content).concat(m);
+      this.setData({ messages, scrollInto: `m${messages.length - 1}` });
+      socket.markRead(m.id);
+    } else if (frame.type === 'chat' && frame.message && this.data.peerId
+        && frame.message.receiverId === myId && frame.message.senderId === this.data.peerId) {
+      // 单聊只推给接收方，自己发的走 ack 确认，不会重复
+      const m = this.decorate(frame.message, myId);
+      const messages = this.data.messages.concat(m);
       this.setData({ messages, scrollInto: `m${messages.length - 1}` });
       socket.markRead(m.id);
     } else if (frame.type === 'ack') {
@@ -110,6 +128,7 @@ Page({
     const optimistic = {
       id: -Date.now(),
       groupId: this.data.groupId,
+      receiverId: this.data.peerId || undefined,
       senderId: me ? me.id : -1,
       senderNickname: me ? me.nickname : '',
       content,
@@ -121,7 +140,9 @@ Page({
     };
     const messages = this.data.messages.concat(optimistic);
     this.setData({ messages, input: '', scrollInto: `m${messages.length - 1}` });
-    const ok = socket.sendToGroup(this.data.groupId, content);
+    const ok = this.data.peerId
+      ? socket.sendToUser(this.data.peerId, content)
+      : socket.sendToGroup(this.data.groupId, content);
     if (!ok) {
       wx.showToast({ title: '连接已断开，返回消息页重连', icon: 'none' });
     }

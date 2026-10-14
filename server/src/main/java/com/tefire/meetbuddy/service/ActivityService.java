@@ -17,9 +17,9 @@ public interface ActivityService {
     /**
      * 活动流。
      * <p>传了 lng/lat/radius 就先走 Redis GEO 圈出半径内的活动，再叠加分类与状态过滤；
-     * 不传则退化为纯分页列表。
+     * 不传则退化为纯分页列表。keyword 非空时按标题模糊搜索，与其余条件叠加。
      */
-    PageVO<ActivityVO> list(String category, String status,
+    PageVO<ActivityVO> list(String category, String status, String keyword,
                             BigDecimal lng, BigDecimal lat, Double radiusKm, long page, long size);
 
     ActivityDetailVO detail(Long activityId, Long currentUserId);

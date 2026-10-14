@@ -84,6 +84,11 @@ public class ActivityServiceImpl implements ActivityService {
         activity.setDescription(request.getDescription());
         activity.setCategory(request.getCategory());
         activity.setCoverUrl(request.getCoverUrl());
+        // 没显式传封面就用第一张配图兜底：发布页传的是 images 数组，
+        // 前端不要求再单独挑一张，feed 卡片的封面也随即有值
+        if (activity.getCoverUrl() == null && request.getImages() != null && !request.getImages().isEmpty()) {
+            activity.setCoverUrl(request.getImages().get(0));
+        }
         activity.setLng(request.getLng());
         activity.setLat(request.getLat());
         activity.setAddress(request.getAddress());
@@ -124,7 +129,7 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public PageVO<ActivityVO> list(String category, String status,
+    public PageVO<ActivityVO> list(String category, String status, String keyword,
                                    BigDecimal lng, BigDecimal lat, Double radiusKm, long page, long size) {
         boolean geo = lng != null && lat != null && radiusKm != null && radiusKm > 0;
         if (geo) {
@@ -141,13 +146,13 @@ public class ActivityServiceImpl implements ActivityService {
                 return new PageVO<>(Collections.emptyList(), ids.size(), page, size);
             }
             return toPage(activityMapper.selectPage(new Page<>(page, size),
-                    buildFilter(category, status).in(Activity::getId, pageIds)), ids.size());
+                    buildFilter(category, status, keyword).in(Activity::getId, pageIds)), ids.size());
         }
 
-        return toPage(activityMapper.selectPage(new Page<>(page, size), buildFilter(category, status)));
+        return toPage(activityMapper.selectPage(new Page<>(page, size), buildFilter(category, status, keyword)));
     }
 
-    private LambdaQueryWrapper<Activity> buildFilter(String category, String status) {
+    private LambdaQueryWrapper<Activity> buildFilter(String category, String status, String keyword) {
         LambdaQueryWrapper<Activity> q = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(category)) {
             q.eq(Activity::getCategory, category);
@@ -158,6 +163,9 @@ public class ActivityServiceImpl implements ActivityService {
             // 默认不展示已结束和已取消，否则活动流会被历史数据淹没
             q.in(Activity::getStatus, ActivityStatus.OPEN.name(),
                     ActivityStatus.FULL.name(), ActivityStatus.ONGOING.name());
+        }
+        if (StringUtils.hasText(keyword)) {
+            q.like(Activity::getTitle, keyword.trim());
         }
         q.orderByDesc(Activity::getCreatedAt);
         return q;
@@ -178,6 +186,17 @@ public class ActivityServiceImpl implements ActivityService {
             vo.setSignedUp(hasSignup(activityId, currentUserId));
             vo.setFavorited(hasFavorite(activityId, currentUserId));
         }
+        // 底部操作条用的派生态：UI 只管按布尔值显隐，规则都收在这里。
+        boolean open = ActivityStatus.canSignUp(activity.getStatus());
+        boolean full = ActivityStatus.FULL.name().equals(activity.getStatus());
+        vo.setHasGroup(activity.getGroupId() != null);
+        vo.setClosed(!open && !full);
+        vo.setCanSignUp(currentUserId != null
+                && !vo.isOrganizer()
+                && !vo.isSignedUp()
+                && open
+                && activity.getCurrentParticipants() < activity.getMaxParticipants());
+        vo.setCanCancelSignUp(vo.isSignedUp() && (open || full));
         return vo;
     }
 

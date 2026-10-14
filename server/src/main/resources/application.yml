@@ -9,6 +9,12 @@ server:
 spring:
   application:
     name: meetbuddy-server
+  servlet:
+    multipart:
+      # 上传体积上限。单张 5MB 对小程序 chooseMedia 压缩后的图是宽裕量级；
+      # 整次请求 20MB 留多张并发的余量。超限由 Spring 在进控制器前挡掉，返回 400
+      max-file-size: 5MB
+      max-request-size: 20MB
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     # characterEncoding 只能填 Java 的字符集名（UTF-8），填 utf8mb4 会抛
@@ -44,6 +50,12 @@ mybatis-plus:
       id-type: auto
 
 meetbuddy:
+  upload:
+    # 图片落盘目录。相对路径按进程工作目录解析——run-local.sh 在 server/ 下启动，
+    # 所以默认落 server/uploads/。经 WebMvcConfig 的静态映射对 /uploads/** 暴露，
+    # 注意该路径不走 /api/**，不受登录拦截：<image> 组件发不了 Authorization 头。
+    # 目录记得加 .gitignore
+    dir: ${MEETBUDDY_UPLOAD_DIR:uploads}
   cors:
     # 允许跨域的来源。开发期 Flutter Web 预览的端口是随机的，所以按 localhost 通配；
     # 上线前改成正式前端域名（可逗号分隔多个）。见 WebMvcConfig#addCorsMappings

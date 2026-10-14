@@ -9,6 +9,21 @@
     height="{{380}}"
   />
 
+  <!-- 活动配图：组织者传了才显示，轮播指示点用小程序原生样式。
+       同样走 background-image（iOS 微信 8.0.58+ 的 <image> 不加载 http 图片） -->
+  <swiper
+    wx:if="{{a.images && a.images.length}}"
+    class="pics"
+    indicator-dots
+    autoplay="{{false}}"
+    circular
+    duration="300"
+  >
+    <swiper-item wx:for="{{a.images}}" wx:key="src">
+      <view class="pic" style="background-image: url('{{item.src}}')"></view>
+    </swiper-item>
+  </swiper>
+
   <view class="head">
     <view class="display">{{a.title}}</view>
     <view class="sub">{{a.organizerNickname || '匿名用户'}} 发起 · {{a.timeText}}</view>
@@ -75,6 +90,9 @@
       <text class="pc">{{item.creditScore}}</text>
     </view>
   </view>
+
+  <!-- 举报入口：页面流内、底部操作条上方，低调不抢戏 -->
+  <view class="report-entry" bindtap="reportActivity">🚫 举报此活动</view>
 
   <!-- 底部操作条 -->
   <view class="joinbar card">

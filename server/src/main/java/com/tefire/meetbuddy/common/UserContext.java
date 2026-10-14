@@ -8,6 +8,8 @@ public final class UserContext {
 
     private static final ThreadLocal<Long> HOLDER = new ThreadLocal<>();
 
+    private static final ThreadLocal<Integer> ROLE_HOLDER = new ThreadLocal<>();
+
     private UserContext() {
     }
 
@@ -19,7 +21,17 @@ public final class UserContext {
         return HOLDER.get();
     }
 
+    /** 角色：0 用户 / 1 管理员。老令牌不带 role claim 时为 null，按 0 处理。 */
+    public static void setRole(Integer role) {
+        ROLE_HOLDER.set(role);
+    }
+
+    public static Integer getRole() {
+        return ROLE_HOLDER.get();
+    }
+
     public static void clear() {
         HOLDER.remove();
+        ROLE_HOLDER.remove();
     }
 }

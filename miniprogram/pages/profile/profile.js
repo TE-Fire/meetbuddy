@@ -21,6 +21,12 @@ Page({
     joined: [],
     connected: false,
     loading: true,
+
+    // —— 编辑资料面板 ——
+    showEdit: false,
+    saving: false,
+    editForm: { nickname: '', bio: '', gender: 0 },
+    genderLabels: ['保密', '男', '女'],
   },
 
   onShow() {
@@ -62,6 +68,64 @@ Page({
   /** 菜单卡前两行：数据就在本页下方，滚过去比再开一页少一步跳转 */
   jumpTo(e) {
     wx.pageScrollTo({ selector: `#${e.currentTarget.dataset.target}`, duration: 300 });
+  },
+
+  openCreditLog() {
+    wx.navigateTo({ url: '/pages/credit-log/credit-log' });
+  },
+
+  openBuddy() {
+    wx.navigateTo({ url: '/pages/buddy/buddy' });
+  },
+
+  // ============ 编辑资料 ============
+  editProfile() {
+    const me = this.data.me;
+    if (!me) return;
+    this.setData({
+      showEdit: true,
+      editForm: {
+        nickname: me.nickname || '',
+        bio: me.bio || '',
+        gender: me.gender || 0,
+      },
+    });
+  },
+  closeEdit() {
+    this.setData({ showEdit: false });
+  },
+  onEditNick(e) {
+    this.setData({ 'editForm.nickname': e.detail.value });
+  },
+  onEditBio(e) {
+    this.setData({ 'editForm.bio': e.detail.value });
+  },
+  onEditGender(e) {
+    this.setData({ 'editForm.gender': Number(e.detail.value) });
+  },
+  async saveProfile() {
+    if (this.data.saving) return;
+    const f = this.data.editForm;
+    if (!f.nickname.trim()) {
+      wx.showToast({ title: '昵称不能为空', icon: 'none' });
+      return;
+    }
+    this.setData({ saving: true });
+    try {
+      const updated = await api.put('/api/user/profile', {
+        nickname: f.nickname,
+        bio: f.bio,
+        gender: f.gender,
+      });
+      // 本页与全局缓存一起刷新，避免 onShow 时又被旧缓存覆盖
+      const me = { ...updated, first: (updated.nickname || '?')[0] };
+      getApp().globalData.me = updated;
+      this.setData({ me, showEdit: false, saving: false });
+      wx.showToast({ title: '已保存', icon: 'none' });
+    } catch (e) {
+      this.setData({ saving: false });
+      wx.showToast({ title: e.message, icon: 'none' });
+    }
   },
 
   /** 数据源那一行点开显示真实地址——真机联调时能直接看清它连的是哪个 host */

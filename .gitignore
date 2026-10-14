@@ -27,6 +27,8 @@ server/**/target/
 server/src/main/resources/application-local.yml
 server/src/main/resources/application-secret.yml
 server/.env.local
+### 上传的图片（application.yml 的 meetbuddy.upload.dir 默认落 server/uploads/）
+server/uploads/
 ### 构建产物
 *.class
 *.jar
@@ -76,6 +78,7 @@ admin/package-lock.json
 admin/yarn.lock
 admin/pnpm-lock.yaml
 admin/.eslintcache
+admin/.vite.err
 
 # ---------- 小程序 miniprogram/ ----------
 # 微信开发者工具生成的本地私有配置（libVersion、urlCheck、编译热重载等按人不同）

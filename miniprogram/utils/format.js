@@ -1,4 +1,7 @@
 // 展示层的小工具函数，与 Flutter 端 ActivityCard/_timeText 的口径保持一致。
+// imgUrl 依赖 config/env（当前环境的后端地址），故在此引入。
+const env = require('../config/env');
+
 function pad2(v) {
   return String(v).padStart(2, '0');
 }
@@ -78,4 +81,24 @@ function statusTone(status) {
   return 'plain';
 }
 
-module.exports = { timeBadge, fmtTime, fmtHm, ago, km, shortAddr, statusLabel, statusTone, pad2 };
+/**
+ * 网络图片地址归一化。上传接口按「请求 Host」生成绝对地址存库，于是：
+ *   模拟器上传 → 库里是 http://127.0.0.1:8099/…
+ *   真机上传   → 库里是 http://10.24.119.1:8099/…（换 WiFi 后这个 IP 就过期）
+ *   curl 上传  → 库里是 http://localhost:8099/…（手机上看等于指手机自己）
+ * 三类地址换台设备就看不了，所以在渲染侧统一按当前环境重写，旧数据自愈：
+ *   /uploads/…             → 拼当前 apiBase（后端静态目录）
+ *   /images/… 等包内路径    → 原样返回（小程序包内资源，不能拼服务器地址）
+ *   http://任意主机/…       → 换成当前 apiBase 的 origin（本项目的 http 图片只可能是后端上传的）
+ *   https://…、data:、wxfile: → 原样返回（外链/本地临时文件不受影响）
+ */
+function imgUrl(u) {
+  if (!u || typeof u !== 'string') return '';
+  if (u.indexOf('/uploads/') === 0) return env.apiBase + u;
+  if (u.charAt(0) === '/') return u;
+  const m = u.match(/^http:\/\/[^/]+(\/.*)?$/);
+  if (m) return env.apiBase.replace(/\/+$/, '') + (m[1] || '');
+  return u;
+}
+
+module.exports = { timeBadge, fmtTime, fmtHm, ago, km, shortAddr, statusLabel, statusTone, imgUrl, pad2 };

@@ -1,10 +1,10 @@
 <view class="sky page" wx:if="{{me}}">
-  <view class="avatar">{{me.first}}</view>
+  <view class="avatar" bindtap="editProfile">{{me.first}}<view class="avatar-badge">✏️</view></view>
   <view class="nameline">
     <text class="name">{{me.nickname}}</text>
     <view class="lv">信用分 {{me.creditScore}}</view>
   </view>
-  <view class="bio">{{me.bio || '同城组局，找个搭子'}}</view>
+  <view class="bio" bindtap="editProfile">{{me.bio || '同城组局，找个搭子'}}<text class="bio-edit">编辑</text></view>
 
   <view class="card stats">
     <view class="stat"><text class="v">{{me.creditScore}}</text><text class="l">信用分</text></view>
@@ -24,6 +24,18 @@
       <view class="mic" style="background: var(--grass-soft)">✅</view>
       <view class="mtx">我参加的局</view>
       <view class="mnum">{{joined.length}}</view>
+      <view class="marr">›</view>
+    </view>
+    <view class="mrow" bindtap="openBuddy">
+      <view class="mic" style="background: var(--warm-bg)">🧭</view>
+      <view class="mtx">找搭子</view>
+      <view class="mstate">匹配附近同好</view>
+      <view class="marr">›</view>
+    </view>
+    <view class="mrow" bindtap="openCreditLog">
+      <view class="mic" style="background: #f3eafe">🏆</view>
+      <view class="mtx">信用分明细</view>
+      <view class="mstate">{{me.creditScore}} 分</view>
       <view class="marr">›</view>
     </view>
     <view class="mrow" bindtap="showSource">
@@ -71,5 +83,31 @@
         </view>
       </view>
     </view>
+  </view>
+</view>
+
+<!-- ============ 编辑资料面板 ============ -->
+<view class="mask {{showEdit ? 'show' : ''}}" bindtap="closeEdit"></view>
+<view class="sheet {{showEdit ? 'show' : ''}}" catchtouchmove="noop">
+  <view class="sheet-grip"></view>
+  <view class="sheet-head">
+    <text class="sheet-title">编辑资料</text>
+    <view class="sheet-x" bindtap="closeEdit">✕</view>
+  </view>
+
+  <view class="label">昵称</view>
+  <view class="field"><input value="{{editForm.nickname}}" maxlength="20" placeholder="怎么称呼你" bindinput="onEditNick" /></view>
+
+  <view class="label">简介</view>
+  <view class="field area"><textarea value="{{editForm.bio}}" maxlength="100" placeholder="一句话介绍自己（选填）" bindinput="onEditBio" /></view>
+
+  <view class="label">性别</view>
+  <picker mode="selector" range="{{genderLabels}}" value="{{editForm.gender}}" bindchange="onEditGender">
+    <view class="picker">{{genderLabels[editForm.gender]}} <text class="caret">▾</text></view>
+  </picker>
+
+  <view class="sheet-actions">
+    <view class="btn-ghost" bindtap="closeEdit">取消</view>
+    <view class="btn-black {{saving ? 'disabled' : ''}}" bindtap="saveProfile">{{saving ? '保存中…' : '保存'}}</view>
   </view>
 </view>

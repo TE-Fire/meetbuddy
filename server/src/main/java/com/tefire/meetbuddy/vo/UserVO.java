@@ -13,7 +13,8 @@ public record UserVO(
         String avatar,
         Integer gender,
         String bio,
-        Integer creditScore
+        Integer creditScore,
+        Integer role
 ) {
     public static UserVO from(User user) {
         if (user == null) {
@@ -26,7 +27,8 @@ public record UserVO(
                 user.getAvatar(),
                 user.getGender(),
                 user.getBio(),
-                user.getCreditScore()
+                user.getCreditScore(),
+                user.getRole()
         );
     }
 }

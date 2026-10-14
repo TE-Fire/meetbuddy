@@ -26,6 +26,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class AuthInterceptor implements HandlerInterceptor {
 
     private static final String BLACKLIST_PREFIX = "jwt:blacklist:";
+    private static final String BAN_PREFIX = "ban:user:";
     private static final String BEARER = "Bearer ";
 
     private final JwtUtil jwtUtil;
@@ -58,7 +59,15 @@ public class AuthInterceptor implements HandlerInterceptor {
             return false;
         }
 
+        // 按人维度的封禁键：封禁时写入、TTL 等于 access 有效期上限，过期自动解除。
+        // 命中说明该用户被管理端封禁，立即拦在新动作之前（登录、发布、报名、发言都会被挡）。
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(BAN_PREFIX + claims.getSubject()))) {
+            reject(response, CommonErrorCode.USER_BANNED);
+            return false;
+        }
+
         UserContext.setUserId(Long.valueOf(claims.getSubject()));
+        UserContext.setRole(claims.get("role") == null ? 0 : ((Number) claims.get("role")).intValue());
         return true;
     }
 

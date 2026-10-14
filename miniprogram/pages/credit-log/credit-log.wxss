@@ -1,0 +1,121 @@
+/* ============ 信用分明细 ============ */
+.score-card {
+  text-align: center;
+  padding: 44rpx 36rpx;
+}
+.score-label {
+  font-size: 26rpx;
+  color: var(--muted);
+  font-weight: 700;
+}
+.score-num {
+  margin: 12rpx 0 22rpx;
+  font-size: 88rpx;
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1;
+}
+.score-bar {
+  height: 18rpx;
+  border-radius: 999rpx;
+  background: var(--field-bg);
+  overflow: hidden;
+}
+.score-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, var(--brand), #6fd0ff);
+  transition: width 0.4s ease;
+}
+.score-hint {
+  margin-top: 18rpx;
+  font-size: 23rpx;
+  color: var(--muted);
+}
+.rules {
+  margin-top: 24rpx;
+  padding: 30rpx 36rpx;
+}
+.rules-title {
+  font-size: 28rpx;
+  font-weight: 900;
+  color: var(--ink);
+  margin-bottom: 14rpx;
+}
+.rule {
+  font-size: 24rpx;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.section-title {
+  margin: 36rpx 8rpx 20rpx;
+  font-size: 30rpx;
+  font-weight: 900;
+  color: var(--ink);
+}
+.empty {
+  text-align: center;
+  padding: 60rpx 36rpx;
+}
+.empty .icon {
+  font-size: 64rpx;
+}
+.empty .title {
+  margin-top: 12rpx;
+  font-size: 29rpx;
+  font-weight: 800;
+  color: var(--ink);
+}
+.empty .hint {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: var(--muted);
+}
+.log-list {
+  padding: 8rpx 0;
+}
+.log {
+  padding: 26rpx 36rpx;
+}
+.log + .log {
+  border-top: 2rpx solid var(--line);
+}
+.log-main {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+.log-val {
+  flex-shrink: 0;
+  width: 110rpx;
+  font-size: 34rpx;
+  font-weight: 900;
+  text-align: center;
+}
+.log-val.up {
+  color: #1f9d55;
+}
+.log-val.down {
+  color: #eb4d5c;
+}
+.log-body {
+  flex: 1;
+  min-width: 0;
+}
+.log-reason {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--ink);
+}
+.log-time {
+  margin-top: 8rpx;
+  font-size: 23rpx;
+  color: var(--muted);
+}
+.more {
+  padding: 26rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--muted);
+}

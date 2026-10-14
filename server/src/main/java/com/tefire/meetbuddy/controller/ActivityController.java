@@ -67,12 +67,13 @@ public class ActivityController {
     public Result<PageVO<ActivityVO>> list(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) BigDecimal lng,
             @RequestParam(required = false) BigDecimal lat,
             @RequestParam(required = false) @DecimalMin("0.5") @DecimalMax("500") Double radius,
             @RequestParam(defaultValue = "1") @Min(1) long page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) long size) {
-        return Result.ok(activityService.list(category, status, lng, lat, radius, page, size));
+        return Result.ok(activityService.list(category, status, keyword, lng, lat, radius, page, size));
     }
 
     @GetMapping("/mine/organized")

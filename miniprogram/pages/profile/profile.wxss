@@ -3,6 +3,7 @@
   text-align: center;
 }
 .avatar {
+  position: relative;
   width: 172rpx;
   height: 172rpx;
   margin: 20rpx auto 0;
@@ -41,6 +42,28 @@
   margin-top: 12rpx;
   font-size: 25rpx;
   color: var(--muted);
+}
+/* 简介行内的编辑入口：低调的浅色小字，不抢签名本身的注意力 */
+.bio-edit {
+  margin-left: 14rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: var(--brand);
+}
+/* 头像右下角的编辑角标，提示整颗头像是可点的 */
+.avatar-badge {
+  position: absolute;
+  right: -6rpx;
+  bottom: -6rpx;
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 8rpx 20rpx rgba(255, 122, 158, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
 }
 
 .stats {
@@ -160,4 +183,110 @@
   margin: 10rpx 0 16rpx;
   font-size: 23rpx;
   color: var(--muted);
+}
+
+/* ============ 编辑资料面板（与 create 页时间面板同款结构，页面级样式各自持有） ============ */
+/* z-index 必须高于自定义菜单栏 .dock 的 100：profile 是 tab 页，菜单栏常驻悬浮，
+   面板盖不住它的话，底部「取消/保存」会被挡死点不到。非 tab 页（create/buddy 等）
+   没有菜单栏，用原来的 50/51 也不会穿帮，但统一抬到 200/201 更好记。 */
+.mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 26, 29, 0.45);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.28s;
+  z-index: 200;
+}
+.mask.show {
+  opacity: 1;
+  visibility: visible;
+}
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 201;
+  background: #fff;
+  border-radius: 40rpx 40rpx 0 0;
+  padding: 22rpx 36rpx calc(36rpx + env(safe-area-inset-bottom));
+  box-shadow: var(--shadow-ink);
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.sheet.show {
+  transform: translateY(0);
+}
+.sheet-grip {
+  width: 72rpx;
+  height: 10rpx;
+  border-radius: 999rpx;
+  background: var(--line);
+  margin: 4rpx auto 16rpx;
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sheet-title {
+  font-size: 33rpx;
+  font-weight: 900;
+  color: var(--ink);
+}
+.sheet-x {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: var(--field-bg);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+}
+.label {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  font-size: 29rpx;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 26rpx 0 18rpx;
+}
+.label::before {
+  content: '';
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 6rpx;
+  background: var(--brand);
+}
+.field.area {
+  height: 220rpx;
+  padding-top: 24rpx;
+  padding-bottom: 24rpx;
+}
+.field.area textarea {
+  height: 100%;
+}
+.picker {
+  background: var(--field-bg);
+  border: 3rpx solid var(--line);
+  border-radius: 28rpx;
+  padding: 28rpx;
+  font-size: 28rpx;
+  color: var(--ink);
+}
+.caret {
+  color: var(--muted);
+}
+.sheet-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 36rpx;
+}
+.sheet-actions .btn-ghost,
+.sheet-actions .btn-black {
+  flex: 1;
 }

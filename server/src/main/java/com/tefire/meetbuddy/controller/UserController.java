@@ -1,18 +1,24 @@
 package com.tefire.meetbuddy.controller;
 
+import com.tefire.meetbuddy.common.PageVO;
 import com.tefire.meetbuddy.common.Result;
 import com.tefire.meetbuddy.common.UserContext;
 import com.tefire.meetbuddy.dto.LocationRequest;
+import com.tefire.meetbuddy.dto.ProfileUpdateRequest;
 import com.tefire.meetbuddy.dto.TagsRequest;
 import com.tefire.meetbuddy.service.UserService;
+import com.tefire.meetbuddy.vo.CreditLogVO;
 import com.tefire.meetbuddy.vo.UserVO;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -41,5 +47,20 @@ public class UserController {
     public Result<Void> tags(@Valid @RequestBody TagsRequest request) {
         userService.updateTags(UserContext.getUserId(), request.getTags());
         return Result.ok();
+    }
+
+    /** 编辑个人资料（昵称/简介/性别均可选，null 不改），返回更新后的资料供前端刷新缓存 */
+    @PutMapping("/profile")
+    public Result<UserVO> profile(@Valid @RequestBody ProfileUpdateRequest request) {
+        return Result.ok(userService.updateProfile(
+                UserContext.getUserId(), request.nickname(), request.bio(), request.gender()));
+    }
+
+    /** 我的信用分明细，按时间倒序 */
+    @GetMapping("/credit/logs")
+    public Result<PageVO<CreditLogVO>> creditLogs(
+            @RequestParam(defaultValue = "1") @Min(1) long page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) long size) {
+        return Result.ok(userService.creditLogs(UserContext.getUserId(), page, size));
     }
 }

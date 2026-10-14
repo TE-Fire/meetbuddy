@@ -64,6 +64,11 @@ function sendToGroup(groupId, content) {
   return send({ type: 'chat', groupId, content });
 }
 
+/** 单聊。服务端只推给接收方，发送方收到的是 ack（见 ChatWebSocketHandler.handleChat） */
+function sendToUser(receiverId, content) {
+  return send({ type: 'chat', receiverId, content });
+}
+
 function markRead(msgId) {
   return send({ type: 'read', msgId });
 }
@@ -119,4 +124,4 @@ function isConnected() {
   return open;
 }
 
-module.exports = { connect, close, sendToGroup, markRead, onEvent, onConnection, isConnected };
+module.exports = { connect, close, sendToGroup, sendToUser, markRead, onEvent, onConnection, isConnected };

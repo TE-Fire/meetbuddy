@@ -54,5 +54,7 @@ public class ActivityCreateRequest {
 
     private List<String> tags;
 
+    /** 图片 URL 列表，由 POST /api/upload/image 上传后回传；上限 9 张，与小程序 chooseMedia 一致 */
+    @Size(max = 9)
     private List<String> images;
 }

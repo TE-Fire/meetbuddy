@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   bio             VARCHAR(200) DEFAULT NULL COMMENT '个人简介',
   credit_score    INT          NOT NULL DEFAULT 100 COMMENT '信用分，区间 [0,100]',
   status          TINYINT      NOT NULL DEFAULT 0 COMMENT '0 正常 / 1 封禁',
+  role            TINYINT      NOT NULL DEFAULT 0 COMMENT '0 用户 / 1 管理员（M6 引入）',
   last_lng        DECIMAL(10,7) DEFAULT NULL COMMENT '最近一次上报的经度',
   last_lat        DECIMAL(10,7) DEFAULT NULL COMMENT '最近一次上报的纬度',
   last_active_at  DATETIME     DEFAULT NULL COMMENT '最近活跃时间',
@@ -66,13 +67,15 @@ CREATE TABLE IF NOT EXISTS activity (
   current_participants INT           NOT NULL DEFAULT 0 COMMENT '冗余计数，由报名锁保证正确',
   status               VARCHAR(16)   NOT NULL DEFAULT 'OPEN' COMMENT 'OPEN/FULL/ONGOING/FINISHED/CANCELLED',
   credit_required      INT           NOT NULL DEFAULT 60 COMMENT '参与所需最低信用分',
+  admin_status         TINYINT       NOT NULL DEFAULT 0 COMMENT '0 正常 / 1 下架（M6 引入，管理侧干预维度，与 status 分离）',
   group_id             BIGINT        DEFAULT NULL COMMENT '关联群聊，活动创建时生成',
   created_at           DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at           DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_status_time (status, start_time),
   KEY idx_organizer (organizer_id),
-  KEY idx_category (category)
+  KEY idx_category (category),
+  KEY idx_admin_status (admin_status)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '活动';
 
 CREATE TABLE IF NOT EXISTS activity_tag (
@@ -207,3 +210,30 @@ CREATE TABLE IF NOT EXISTS report (
   KEY idx_status (status),
   KEY idx_target (target_type, target_id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '举报';
+
+-- ============ M6 增量迁移（针对已存在的库，幂等） ============
+-- 新库靠上面的 CREATE TABLE 直接带列；旧库靠下面的 ALTER 补齐。
+-- 用存储过程包一层，先查 information_schema 再决定是否 ALTER，避免重复执行报错。
+DELIMITER $$
+DROP PROCEDURE IF EXISTS migrate_m6 $$
+CREATE PROCEDURE migrate_m6()
+BEGIN
+  IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = DATABASE() AND table_name = 'user' AND column_name = 'role'
+  ) THEN
+    ALTER TABLE `user` ADD COLUMN `role` TINYINT NOT NULL DEFAULT 0 COMMENT '0 用户 / 1 管理员';
+  END IF;
+
+  IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = DATABASE() AND table_name = 'activity' AND column_name = 'admin_status'
+  ) THEN
+    ALTER TABLE `activity` ADD COLUMN `admin_status` TINYINT NOT NULL DEFAULT 0 COMMENT '0 正常 / 1 下架';
+    ALTER TABLE `activity` ADD INDEX `idx_admin_status` (`admin_status`);
+  END IF;
+END$$
+DELIMITER ;
+
+CALL migrate_m6();
+DROP PROCEDURE IF EXISTS migrate_m6;

@@ -6,7 +6,9 @@
     "pages/login/login",
     "pages/detail/detail",
     "pages/create/create",
-    "pages/chat-room/chat-room"
+    "pages/chat-room/chat-room",
+    "pages/credit-log/credit-log",
+    "pages/buddy/buddy"
   ],
   "window": {
     "navigationBarBackgroundColor": "#DDF0FC",

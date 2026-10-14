@@ -1,0 +1,139 @@
+/* ============================================================
+   MeetBuddy 管理端 · 全局设计令牌与"呼吸感"交互语言
+   品牌色由 theme store 在运行时写入 --el-color-primary 及其衍生色；
+   这里给出浅/暗两套表面色与缓动曲线，所有组件共用。
+   ============================================================ */
+
+:root {
+  --brand: #38B2F2;
+  --brand-soft: rgba(56, 178, 242, 0.12);
+  --bg: #f4f8fd;
+  --panel: #ffffff;
+  --panel-2: #f7fafd;
+  --text: #1f2d3d;
+  --text-soft: #6b7a90;
+  --border: #e8eef5;
+  --shadow-sm: 0 2px 8px rgba(40, 90, 150, 0.06);
+  --shadow-md: 0 10px 28px rgba(40, 90, 150, 0.10);
+  --shadow-lg: 0 18px 44px rgba(40, 90, 150, 0.16);
+  --radius: 14px;
+  --ease: cubic-bezier(0.22, 0.8, 0.26, 1);
+  --ripple: rgba(56, 178, 242, 0.28);
+}
+
+html.dark {
+  --bg: #0f141c;
+  --panel: #161d27;
+  --panel-2: #1b2430;
+  --text: #e6edf6;
+  --text-soft: #8a9bb0;
+  --border: #26303d;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.30);
+  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.42);
+  --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.55);
+  --brand-soft: rgba(56, 178, 242, 0.18);
+  --ripple: rgba(255, 255, 255, 0.22);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app { height: 100%; margin: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.4s var(--ease), color 0.4s var(--ease);
+}
+
+/* ---------- 滚动条 ---------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-soft); }
+
+/* ============================================================
+   呼吸感 1 · 点击涟漪（ripple 指令注入的 .ripple 元素）
+   ============================================================ */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--ripple);
+  transform: scale(0);
+  animation: ripple 0.6s var(--ease) forwards;
+  pointer-events: none;
+}
+@keyframes ripple {
+  to { transform: scale(2.6); opacity: 0; }
+}
+
+/* ============================================================
+   呼吸感 2 · 悬浮上浮（卡片 / 面板）
+   ============================================================ */
+.lift {
+  transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
+  will-change: transform;
+}
+.lift:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ============================================================
+   呼吸感 3 · 选中态的"轻轻起伏"
+   侧栏当前项有一道随呼吸明灭的光晕 + 左侧品牌色条。
+   ============================================================ */
+@keyframes breath {
+  0%, 100% {
+    box-shadow: inset 3px 0 0 var(--brand), 0 0 0 0 rgba(56, 178, 242, 0);
+  }
+  50% {
+    box-shadow: inset 3px 0 0 var(--brand), 0 0 16px 2px var(--brand-soft);
+  }
+}
+
+/* ============================================================
+   呼吸感 4 · 按钮按下回弹
+   ============================================================ */
+.el-button {
+  transition: transform 0.16s var(--ease), box-shadow 0.25s var(--ease), background 0.25s var(--ease);
+}
+.el-button:active { transform: scale(0.96); }
+.el-button--primary { box-shadow: var(--shadow-sm); }
+.el-button--primary:hover { box-shadow: var(--shadow-md); }
+
+/* 让表格行、菜单项点击也有涟漪的"按住"反馈 */
+.clickable { position: relative; overflow: hidden; cursor: pointer; }
+
+/* ============================================================
+   呼吸感 5 · 页面切换淡入上浮
+   ============================================================ */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.35s var(--ease), transform 0.35s var(--ease);
+}
+.fade-enter-from { opacity: 0; transform: translateY(12px); }
+.fade-leave-to { opacity: 0; transform: translateY(-6px); }
+
+/* 通用面板 */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 数字卡渐变（看板） */
+.grad-sky   { background: linear-gradient(135deg, #38B2F2, #6FD0FF); }
+.grad-grass { background: linear-gradient(135deg, #2DBE8B, #7BE0BD); }
+.grad-warm  { background: linear-gradient(135deg, #FF9F43, #FFC57A); }
+.grad-violet{ background: linear-gradient(135deg, #8B7CF6, #B9A6FF); }
+.grad-text { color: #fff; }
+
+/* 暗色下让渐变卡更沉稳 */
+html.dark .grad-sky   { background: linear-gradient(135deg, #2a7fb8, #2f6f93); }
+html.dark .grad-grass { background: linear-gradient(135deg, #1f8d68, #2a6f5b); }
+html.dark .grad-warm  { background: linear-gradient(135deg, #b9722c, #9c6326); }
+html.dark .grad-violet{ background: linear-gradient(135deg, #5d4fb0, #4f4789); }

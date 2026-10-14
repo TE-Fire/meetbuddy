@@ -61,13 +61,21 @@
 | 有连接但一直没响应 / 提示「连不上后端 http://172.x.x.x:8099」 | 手机与电脑不同网段 / AP 隔离 / 防火墙拦了入站 | 换同一 WiFi、关手机 VPN、放行后端进程入站 |
 | 群聊发消息提示「连接已断开…」 | WebSocket 没连上（与 http 同一个地址） | 同上，先让 http 通 |
 
+**图片单独一条规则**：iOS 微信 8.0.58+ 的 `<image>` 组件**不加载 http 图片**（iOS 18 WebKit
+按混合内容标准把 http 资源改道 https，后端是 http 就必失败；官方已确认并建议全面切 HTTPS）。
+本地开发没有 HTTPS，所以本项目所有网络图片（上传的活动配图、feed 封面、详情轮播、发布页缩略图）
+一律用 `background-image` 渲染而不是 `<image>`——背景图走 WebView 样式通道，不受该限制。
+改动集中在 `utils/format.js` 的 `imgUrl()`（地址归一化：localhost / 127.0.0.1 / 过期局域网 IP
+统一按当前环境重写，换设备换 WiFi 自愈）和三个页面的 WXML/WXSS。上线配好 HTTPS 后可以改回
+`<image>`，届时把 `imgUrl` 一起下掉。
+
 ## 结构
 
 ```
 config/env.js          后端地址（唯一需要改的地方）
 utils/api.js           统一请求层：拼 URL、注入 Bearer、拆 {code,message,data} 信封
 utils/socket.js        WebSocket 通道：ws://…/ws?token=，30s 心跳，chat/ack/offline/error 帧分发
-utils/format.js        时间徽标 / 相对时间 / 距离等展示口径（与 Flutter 端一致）
+utils/format.js        时间徽标 / 相对时间 / 距离 / imgUrl 图片地址归一化（与 Flutter 端一致）
 components/map-scene/  地图插画组件（纯 CSS + base64 SVG 虚线路线）
 custom-tab-bar/        自定义黑胶囊底部导航（发现 / 消息 / 我的）
 pages/login            登录（密码 / 验证码 / 注册）

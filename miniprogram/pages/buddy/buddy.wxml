@@ -1,0 +1,142 @@
+<wxs module="m">
+module.exports = {
+  has: function (arr, v) { return arr.indexOf(v) >= 0; }
+};
+</wxs>
+
+<view class="sky page">
+  <view class="display">找个<text class="hl">搭子</text></view>
+  <view class="display-sub">标签越合，越容易一起玩</view>
+
+  <!-- 双页签：匹配结果 / 我发布的需求 -->
+  <view class="tabs card">
+    <view class="tab {{tab === 'match' ? 'on' : ''}}" data-t="match" bindtap="switchTab">找搭子</view>
+    <view class="tab {{tab === 'mine' ? 'on' : ''}}" data-t="mine" bindtap="switchTab">我的需求</view>
+  </view>
+
+  <!-- ============ 找搭子 ============ -->
+  <block wx:if="{{tab === 'match'}}">
+    <view class="geo-bar">
+      <text>演示坐标：北京国贸 · 半径 {{radius}} km</text>
+      <text class="change" bindtap="changeRadius">改半径 ›</text>
+    </view>
+
+    <view wx:if="{{matchLoading}}" class="card empty">
+      <view class="title">正在算匹配分…</view>
+    </view>
+
+    <block wx:elif="{{matches.length}}">
+      <view wx:for="{{matches}}" wx:key="requestId" class="mcard card">
+        <view class="mhead">
+          <view class="mavatar">{{item.nickname ? item.nickname[0] : '?'}}</view>
+          <view class="minfo">
+            <view class="mname ellipsis">{{item.nickname}}</view>
+            <view class="mmeta">信用分 {{item.creditScore}} · {{item.distanceText}}</view>
+          </view>
+          <view class="mscore">
+            <text class="msc-num">{{item.scorePct}}</text>
+            <text class="msc-lbl">匹配度</text>
+          </view>
+        </view>
+        <view class="mtitle ellipsis">{{item.title}}</view>
+        <view class="mtags">
+          <view class="mtag grass">{{item.category}}</view>
+          <view wx:if="{{item.timeRange}}" class="mtag plain">🕐 {{item.timeRange}}</view>
+          <view wx:for="{{item.commonTags}}" wx:for-item="t" wx:key="*this" class="mtag brand">{{t}}</view>
+        </view>
+        <view class="mreason">💡 {{item.reason}}</view>
+        <view class="mactions">
+          <view class="btn-ghost grow" bindtap="dm" data-id="{{item.userId}}" data-name="{{item.nickname}}">💬 私聊 TA</view>
+        </view>
+      </view>
+    </block>
+
+    <view wx:else class="card empty">
+      <view class="icon">🧭</view>
+      <view class="title">这个半径内还没有找搭子的人</view>
+      <view class="hint">把半径调大一点，或者去「我的需求」发布一个</view>
+    </view>
+  </block>
+
+  <!-- ============ 我的需求 ============ -->
+  <block wx:else>
+    <view wx:if="{{mine.length}}">
+      <view wx:for="{{mine}}" wx:key="id" class="bcard card">
+        <view class="bhead">
+          <view class="btitle ellipsis">{{item.title}}</view>
+          <view class="bstatus {{item.status === 'OPEN' ? 'open' : 'closed'}}">
+            {{item.status === 'OPEN' ? '开放中' : '已关闭'}}
+          </view>
+        </view>
+        <view class="mtags">
+          <view class="mtag grass">{{item.category}}</view>
+          <view wx:if="{{item.timeRange}}" class="mtag plain">🕐 {{item.timeRange}}</view>
+          <view wx:for="{{item.tags}}" wx:for-item="t" wx:key="*this" class="mtag brand">{{t}}</view>
+        </view>
+        <view wx:if="{{item.description}}" class="bdesc">{{item.description}}</view>
+        <view class="bfoot">
+          <text class="btime">发布于 {{item.timeText}}</text>
+          <view wx:if="{{item.status === 'OPEN'}}" class="bclose" catchtap="closeRequest" data-id="{{item.id}}">关闭需求</view>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="card empty">
+      <view class="icon">📝</view>
+      <view class="title">还没有发布过搭子需求</view>
+      <view class="hint">发布后，附近标签相投的人就能匹配到你</view>
+    </view>
+    <view class="btn-black" bindtap="openPublish">发布搭子需求</view>
+  </block>
+
+  <!-- ============ 发布需求面板（与 create 页时间面板同款结构） ============ -->
+  <view class="mask {{showPublish ? 'show' : ''}}" bindtap="closePublish"></view>
+  <view class="sheet {{showPublish ? 'show' : ''}}" catchtouchmove="noop">
+    <view class="sheet-grip"></view>
+    <view class="sheet-head">
+      <view class="sheet-title">发布搭子需求</view>
+      <view class="sheet-x" bindtap="closePublish">✕</view>
+    </view>
+
+    <view class="label">想找什么样的搭子</view>
+    <view class="field">
+      <input maxlength="30" placeholder="例：周末剧本杀差两人" value="{{form.title}}" bindinput="onFormTitle" />
+    </view>
+
+    <view class="label">分类</view>
+    <view class="chips-wrap">
+      <view
+        wx:for="{{categories}}"
+        wx:key="*this"
+        class="chip {{form.category === item ? 'on' : ''}}"
+        data-c="{{item}}"
+        bindtap="pickFormCategory"
+      >{{item}}</view>
+    </view>
+
+    <view class="label">大概什么时候（选填）</view>
+    <view class="field">
+      <input maxlength="20" placeholder="例：周末下午 / 工作日晚间" value="{{form.timeRange}}" bindinput="onFormTime" />
+    </view>
+
+    <view class="label">标签（可多选）</view>
+    <view class="chips-wrap">
+      <view
+        wx:for="{{tagPool}}"
+        wx:key="*this"
+        class="chip {{m.has(form.tags, item) ? 'on' : ''}}"
+        data-t="{{item}}"
+        bindtap="toggleFormTag"
+      >{{item}}</view>
+    </view>
+
+    <view class="label">补充说明（选填）</view>
+    <view class="field area">
+      <textarea maxlength="200" placeholder="想玩什么本、什么水平，写清楚匹配更准" value="{{form.description}}" bindinput="onFormDesc" />
+    </view>
+
+    <view class="sheet-actions">
+      <view class="btn-ghost" bindtap="closePublish">取消</view>
+      <view class="btn-black {{publishing ? 'disabled' : ''}}" bindtap="submitPublish">{{publishing ? '发布中…' : '发布'}}</view>
+    </view>
+  </view>
+</view>

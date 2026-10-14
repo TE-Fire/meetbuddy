@@ -163,8 +163,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private TokenVO issueTokens(User user) {
-        String accessToken = jwtUtil.createAccessToken(user.getId(), UUID.randomUUID().toString());
-        String refreshToken = jwtUtil.createRefreshToken(user.getId(), UUID.randomUUID().toString());
+        String accessToken = jwtUtil.createAccessToken(user.getId(), UUID.randomUUID().toString(), user.getRole());
+        String refreshToken = jwtUtil.createRefreshToken(user.getId(), UUID.randomUUID().toString(), user.getRole());
         return new TokenVO(accessToken, refreshToken, com.tefire.meetbuddy.vo.UserVO.from(user));
     }
 

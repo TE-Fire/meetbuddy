@@ -2,10 +2,27 @@
   <!-- 顶栏：城市 + 搜索 + 就近 -->
   <view class="topnav">
     <view class="city">上海 <text class="caret">▾</text></view>
-    <view class="search card-sm" bindtap="searchTip">
-      <text class="s-icon">🔍</text>
-      <text class="s-text">搜活动、搜搭子</text>
-    </view>
+    <block wx:if="{{!searching}}">
+      <view class="search card-sm" bindtap="openSearch">
+        <text class="s-icon">🔍</text>
+        <text class="s-text">搜活动、搜搭子</text>
+      </view>
+    </block>
+    <block wx:else>
+      <view class="search card-sm searching">
+        <text class="s-icon">🔍</text>
+        <input
+          class="s-input"
+          value="{{keyword}}"
+          placeholder="搜活动名字"
+          focus="{{searchFocus}}"
+          bindinput="onKeyword"
+          bindconfirm="doSearch"
+          confirm-type="search"
+        />
+        <text class="s-cancel" bindtap="closeSearch">取消</text>
+      </view>
+    </block>
     <view class="geo {{geoEnabled ? 'on' : ''}}" bindtap="toggleGeo">📍</view>
   </view>
 
@@ -44,7 +61,23 @@
         bindtap="openDetail"
       >
         <view class="cover-wrap">
+          <!-- 有配图的活动显示真实封面（coverUrl 由后端在建活动时取第一张图兜底）；
+               没有配图退回原来的地图插画，两种形态共用同一个时间徽标位。
+               网络图片刻意用 background-image 而不是 <image>：iOS 微信 8.0.58+
+               的 image 组件不加载 http 图片（WebKit 混合内容策略），background-image
+               走 WebView 样式通道不受影响，详见 README「真机联调」。 -->
+          <view
+            wx:if="{{item.coverSrc}}"
+            class="cover-img"
+            style="background-image: url('{{item.coverSrc}}')"
+          ></view>
+          <view
+            wx:if="{{item.coverSrc}}"
+            class="cover-badge"
+            style="background: {{item.isToday ? '#38B2F2' : '#171A1D'}}"
+          >{{item.timeBadge}}</view>
           <map-scene
+            wx:else
             badge="{{item.timeBadge}}"
             badgeColor="{{item.isToday ? '#38B2F2' : '#171A1D'}}"
             sticker="{{item.icon}}"
@@ -81,8 +114,8 @@
     <block wx:else>
       <view wx:if="{{!loading}}" class="empty card">
         <view class="icon">🧭</view>
-        <view class="title">{{geoEnabled ? '这个范围内还没有活动' : '还没有活动'}}</view>
-        <view class="hint">{{geoEnabled ? '把半径调大一点，或者关掉就近筛选看看全部' : '点右下角发起一个，做第一个组局的人'}}</view>
+        <view class="title">{{keyword ? '没有找到「' + keyword + '」相关的活动' : (geoEnabled ? '这个范围内还没有活动' : '还没有活动')}}</view>
+        <view class="hint">{{keyword ? '换个词试试，或者清空搜索词' : (geoEnabled ? '把半径调大一点，或者关掉就近筛选看看全部' : '点右下角发起一个，做第一个组局的人')}}</view>
       </view>
     </block>
   </view>

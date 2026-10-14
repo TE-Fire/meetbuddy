@@ -25,6 +25,24 @@
   padding: 0 30rpx;
   border-radius: 999rpx;
 }
+.search.searching {
+  border: 3rpx solid var(--brand);
+}
+.s-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  font-size: 27rpx;
+  color: var(--ink);
+  background: transparent;
+}
+.s-cancel {
+  flex-shrink: 0;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: var(--brand);
+  padding-left: 10rpx;
+}
 .s-icon {
   font-size: 26rpx;
 }
@@ -178,4 +196,27 @@
 .plus {
   font-size: 36rpx;
   font-weight: 700;
+}
+
+/* ============ feed 活动配图封面 ============ */
+/* 有配图时用真实照片替换地图插画；徽标改由 WXML 直接渲染（map-scene 被 wx:else 隐藏了）。
+   背景图方案（替代 <image>）需要显式指定裁切行为，等价于原 mode="aspectFill" */
+.cover-img {
+  width: 100%;
+  height: 236rpx;
+  display: block;
+  background-color: var(--field-bg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.cover-badge {
+  position: absolute;
+  left: 24rpx;
+  top: 24rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 800;
 }

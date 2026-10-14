@@ -1,0 +1,36 @@
+<view class="sky page">
+  <!-- 当前分 -->
+  <view class="card score-card">
+    <view class="score-label">当前信用分</view>
+    <view class="score-num">{{score == null ? '—' : score}}</view>
+    <view class="score-bar"><i style="width: {{score == null ? 0 : score}}%"></i></view>
+    <view class="score-hint">满值 100，低于活动门槛时无法报名</view>
+  </view>
+
+  <!-- 规则说明 -->
+  <view class="card rules">
+    <view class="rules-title">分怎么来、怎么走</view>
+    <view class="rule" wx:for="{{rules}}" wx:key="*this">· {{item}}</view>
+  </view>
+
+  <!-- 流水 -->
+  <view class="section-title">变动记录</view>
+  <view wx:if="{{!logs.length && !loading}}" class="card empty">
+    <view class="icon">🏆</view>
+    <view class="title">还没有变动记录</view>
+    <view class="hint">正常履约不掉分，保持 100 分就是最好的状态</view>
+  </view>
+  <view wx:elif="{{logs.length}}" class="card log-list">
+    <view wx:for="{{logs}}" wx:key="id" class="log">
+      <view class="log-main">
+        <view class="log-val {{item.plus ? 'up' : 'down'}}">{{item.plus ? '+' : ''}}{{item.changeValue}}</view>
+        <view class="log-body">
+          <view class="log-reason">{{item.reason}}</view>
+          <view class="log-time">{{item.timeText}}{{item.balanceAfter != null ? ' · 余 ' + item.balanceAfter : ''}}</view>
+        </view>
+      </view>
+    </view>
+    <view class="more" wx:if="{{loading}}">加载中…</view>
+    <view class="more" wx:elif="{{logs.length >= 20 && hasMore}}">上拉加载更多</view>
+  </view>
+</view>

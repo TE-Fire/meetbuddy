@@ -9,6 +9,8 @@ function mapActivity(a, distanceKm) {
   return {
     ...a,
     icon: CATEGORY_ICONS[a.category] || '✨',
+    // 封面地址归一化后再进渲染层（见 fmt.imgUrl 注释）：换设备、换 WiFi 都能自愈
+    coverSrc: fmt.imgUrl(a.coverUrl),
     timeBadge: fmt.timeBadge(a.startTime),
     isToday: (a.startTime || '').slice(0, 10) === new Date().toISOString().slice(0, 10),
     addrShort: fmt.shortAddr(distanceKm == null ? a.address : `${fmt.shortAddr(a.address)} · ${fmt.km(distanceKm)}`),
@@ -34,6 +36,11 @@ Page({
     hasMore: false,
     geoEnabled: false,
     radius: 10,
+
+    // —— 搜索态 ——
+    searching: false,
+    searchFocus: false,
+    keyword: '',
   },
 
   onLoad() {
@@ -67,6 +74,7 @@ Page({
     const page = reset ? 1 : this.data.page + 1;
     this.setData({ loading: true, error: '' });
     const query = { page, size: 20, category: this.data.category || undefined };
+    if (this.data.keyword) query.keyword = this.data.keyword.trim();
     if (this.data.geoEnabled) {
       // 演示坐标：北京国贸
       query.lng = 116.461;
@@ -128,7 +136,33 @@ Page({
     wx.navigateTo({ url: '/pages/create/create' });
   },
 
-  searchTip() {
-    wx.showToast({ title: '搜索还在路上，先用分类逛逛', icon: 'none' });
+  // ============ 搜索 ============
+  openSearch() {
+    this.setData({ searching: true, searchFocus: true });
+  },
+  onKeyword(e) {
+    this.setData({ keyword: e.detail.value });
+    // 清空输入时自动回到完整列表，不用再点一次搜索
+    if (!e.detail.value.trim() && this._wasSearch) {
+      this._wasSearch = false;
+      this.load(true);
+    }
+  },
+  /** 键盘确认键 / 回车触发 */
+  doSearch() {
+    const kw = (this.data.keyword || '').trim();
+    if (!kw) {
+      wx.showToast({ title: '先输入点关键词', icon: 'none' });
+      return;
+    }
+    this._wasSearch = true;
+    this.load(true);
+  },
+  closeSearch() {
+    const wasSearch = this._wasSearch;
+    this._wasSearch = false;
+    this.setData({ searching: false, searchFocus: false, keyword: '' });
+    // 从搜索结果退出时，恢复完整列表
+    if (wasSearch) this.load(true);
   },
 });

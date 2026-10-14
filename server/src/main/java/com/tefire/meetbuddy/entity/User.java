@@ -34,6 +34,9 @@ public class User {
     /** 0 正常 / 1 封禁 */
     private Integer status;
 
+    /** 0 普通用户 / 1 管理员（M6 引入） */
+    private Integer role;
+
     private BigDecimal lastLng;
 
     private BigDecimal lastLat;

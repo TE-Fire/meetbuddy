@@ -10,6 +10,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.stream.Collectors;
 
@@ -61,6 +62,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateKeyException.class)
     public Result<Void> handleDuplicate(DuplicateKeyException e) {
         return Result.fail(ActivityErrorCode.DUPLICATE_SIGNUP);
+    }
+
+    /**
+     * 静态资源不存在（典型：/uploads/ 下被删掉的图片）。不接的话会落进
+     * handleOther 记成全栈 5000——文件不存在是正常情况，不该当服务端故障刷错误日志。
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public Result<Void> handleNoResource(NoResourceFoundException e) {
+        log.debug("[static] 资源不存在: {}", e.getMessage());
+        return Result.fail(CommonErrorCode.NOT_FOUND);
     }
 
     @ExceptionHandler(Exception.class)

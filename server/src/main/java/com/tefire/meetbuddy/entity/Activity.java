@@ -44,6 +44,9 @@ public class Activity {
     /** OPEN / FULL / ONGOING / FINISHED / CANCELLED */
     private String status;
 
+    /** 管理侧干预维度：0 正常 / 1 下架。与 status 状态机分离，避免表达不了"进行中却被下架" */
+    private Integer adminStatus;
+
     private Integer creditRequired;
 
     private Long groupId;

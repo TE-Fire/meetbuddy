@@ -183,8 +183,33 @@
 .danger {
   color: #eb4d5c;
 }
+/* 举报入口：页面流内、joinbar 上方，下边距避开 fixed 操作条 */
+.report-entry {
+  margin: 20rpx auto 220rpx;
+  font-size: 24rpx;
+  color: var(--muted);
+  text-align: center;
+}
 .retry {
   margin-top: 30rpx;
   height: 88rpx;
   font-size: 28rpx;
+}
+
+/* ============ 活动配图轮播 ============ */
+/* 背景图方案等价于原 mode="aspectFill"：撑满 + 居中裁切 */
+.pics {
+  margin: 24rpx 24rpx 0;
+  height: 420rpx;
+  border-radius: 28rpx;
+  overflow: hidden;
+  background: var(--field-bg);
+}
+.pics .pic {
+  width: 100%;
+  height: 420rpx;
+  display: block;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }

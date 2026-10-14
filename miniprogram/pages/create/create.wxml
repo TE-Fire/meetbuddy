@@ -1,3 +1,9 @@
+<wxs module="m">
+module.exports = {
+  has: function (arr, v) { return arr.indexOf(v) >= 0; }
+};
+</wxs>
+
 <view class="sky page">
   <view class="display">说出想法，<text class="hl">一键组局</text></view>
   <view class="display-sub">发布后即刻同步给附近的搭子</view>
@@ -21,17 +27,13 @@
     </view>
   </view>
 
-  <view class="card box">
-    <view class="label">时间</view>
-    <view class="time-row">
-      <view class="time-box" bindtap="pickStart">
-        <text class="tl">开始</text>
-        <text class="tv {{startText === '选择时间' ? 'dim' : ''}}">{{startText}}</text>
-      </view>
-      <view class="time-box" bindtap="pickEnd">
-        <text class="tl">结束</text>
-        <text class="tv {{endText === '选择时间' ? 'dim' : ''}}">{{endText}}</text>
-      </view>
+  <view class="card box time-card" bindtap="openTime">
+    <view class="label">时间<text class="label-tip">点按设置</text></view>
+    <view wx:if="{{startText === '选择时间'}}" class="time-empty">点此设置活动时间 ▾</view>
+    <view wx:else class="time-row2">
+      <view class="tcol"><text class="tl">开始</text><text class="tv">{{startText}}</text></view>
+      <view class="tcol"><text class="tl">结束</text><text class="tv">{{endText}}</text></view>
+      <view class="tcol dur"><text class="tl">时长</text><text class="tv">{{timeDur}}</text></view>
     </view>
   </view>
 
@@ -69,7 +71,7 @@
       <view
         wx:for="{{tagPool}}"
         wx:key="*this"
-        class="chip {{tags.indexOf(item) >= 0 ? 'on' : ''}}"
+        class="chip {{m.has(tags, item) ? 'on' : ''}}"
         data-t="{{item}}"
         bindtap="toggleTag"
       >{{item}}</view>
@@ -83,9 +85,73 @@
     </view>
   </view>
 
+  <view class="card box">
+    <view class="label">活动配图<text class="label-tip">最多 9 张，第一张是封面</text></view>
+    <view class="img-grid">
+      <view wx:for="{{images}}" wx:key="*this" class="img-cell">
+        <!-- 缩略图同样走 background-image（iOS 微信 8.0.58+ 的 <image> 不加载 http 图片） -->
+        <view class="img-thumb" style="background-image: url('{{item}}')"></view>
+        <view wx:if="{{index === 0}}" class="img-cover">封面</view>
+        <view class="img-rm" catchtap="removeImage" data-i="{{index}}">✕</view>
+      </view>
+      <view wx:if="{{images.length < 9}}" class="img-add" bindtap="chooseImage">
+        <text class="img-plus">{{uploading ? '…' : '＋'}}</text>
+        <text class="img-add-tip">{{uploading ? '上传中' : '加图'}}</text>
+      </view>
+    </view>
+  </view>
+
   <view class="tip">
     <text>ℹ️ 发布成功会同时建好群聊，你自动是群主；之后别人一报名就进群。</text>
   </view>
 
   <view class="btn-black {{submitting ? 'disabled' : ''}}" bindtap="submit">{{submitting ? '发布中…' : '发布组局'}}</view>
+</view>
+
+<!-- ============ 时间选择：区间滑动面板 ============ -->
+<view class="mask {{showTime ? 'show' : ''}}" bindtap="closeTime"></view>
+<view class="sheet {{showTime ? 'show' : ''}}" catchtouchmove="noop">
+  <view class="sheet-grip"></view>
+  <view class="sheet-head">
+    <text class="sheet-title">选择活动时间</text>
+    <view class="sheet-x" bindtap="closeTime">✕</view>
+  </view>
+
+  <view class="label rs-label">日期</view>
+  <view class="chips-wrap rs-dates">
+    <view
+      wx:for="{{rsDates}}"
+      wx:key="label"
+      class="chip {{rsDateIdx === index ? 'on' : ''}}"
+      data-i="{{index}}"
+      bindtap="pickRsDate"
+    >{{item.label}}</view>
+  </view>
+
+  <view class="rs-readout">
+    <text class="rs-start">{{rsStartTxt}}</text>
+    <text class="rs-dur">共 {{rsDur}}</text>
+    <text class="rs-end">{{rsEndTxt}}</text>
+  </view>
+
+  <view class="rs-track" catchtouchmove="onRsMove" bindtouchend="onRsEnd">
+    <view class="rs-fill" style="left:{{rsStartPct}}%;right:{{100 - rsEndPct}}%"></view>
+    <view class="rs-tick" style="left:0%"></view>
+    <view class="rs-tick" style="left:25%"></view>
+    <view class="rs-tick" style="left:50%"></view>
+    <view class="rs-tick" style="left:75%"></view>
+    <view class="rs-tick" style="left:100%"></view>
+    <text class="rs-tag" style="left:{{rsStartPct}}%">{{rsStartTag}}</text>
+    <text class="rs-tag" style="left:{{rsEndPct}}%">{{rsEndTag}}</text>
+    <view class="rs-handle" style="left:{{rsStartPct}}%" bindtouchstart="onRsDown" data-h="start"></view>
+    <view class="rs-handle" style="left:{{rsEndPct}}%" bindtouchstart="onRsDown" data-h="end"></view>
+  </view>
+  <view class="rs-scale">
+    <text>0:00</text><text>6:00</text><text>12:00</text><text>18:00</text><text>24:00</text>
+  </view>
+
+  <view class="sheet-actions">
+    <view class="btn-ghost" bindtap="closeTime">取消</view>
+    <view class="btn-black" bindtap="confirmTime">确定</view>
+  </view>
 </view>
