@@ -29,6 +29,13 @@ Page({
     me: null,
     categories: CATEGORIES,
     category: '',
+    // —— 排序 tab：最新 / 最热 / 最近（最近仅在开启就近时生效）——
+    sorts: [
+      { key: 'latest', label: '最新' },
+      { key: 'hot', label: '最热' },
+      { key: 'distance', label: '最近' },
+    ],
+    sortBy: 'latest',
     feed: [],
     loading: false,
     error: '',
@@ -75,6 +82,12 @@ Page({
     this.setData({ loading: true, error: '' });
     const query = { page, size: 20, category: this.data.category || undefined };
     if (this.data.keyword) query.keyword = this.data.keyword.trim();
+    // 最近排序依赖坐标，未开就近时传 latest，后端也会再降级一次，双保险
+    if (this.data.sortBy === 'distance' && !this.data.geoEnabled) {
+      query.sortBy = 'latest';
+    } else if (this.data.sortBy !== 'latest') {
+      query.sortBy = this.data.sortBy;
+    }
     if (this.data.geoEnabled) {
       // 演示坐标：北京国贸
       query.lng = 116.461;
@@ -110,6 +123,13 @@ Page({
     const c = e.currentTarget.dataset.c || '';
     if (c === this.data.category) return;
     this.setData({ category: c });
+    this.load(true);
+  },
+
+  onSort(e) {
+    const s = e.currentTarget.dataset.s || 'latest';
+    if (s === this.data.sortBy) return;
+    this.setData({ sortBy: s });
     this.load(true);
   },
 

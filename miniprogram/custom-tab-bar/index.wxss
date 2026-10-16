@@ -1,50 +1,75 @@
+/* 透明磨砂玻璃胶囊：半透明墨色底 + backdrop-filter 模糊身后内容。
+   两条 blur 都要写：iOS 的 WKWebView 只认 -webkit- 前缀；模糊半径用 px 不用 rpx
+   （rpx 在某些基础库里不会在 filter 函数里换算）。
+   刻意不设 overflow:hidden —— 未读角标是绝对定位溢出到胶囊外的，裁掉就看不到了。
+   box-sizing:border-box 是为了让 1rpx 高光描边不把总体高度顶高。 */
 .dock {
   position: fixed;
   left: 36rpx;
   right: 36rpx;
   bottom: 28rpx;
   height: 124rpx;
+  box-sizing: border-box;
   border-radius: 999rpx;
-  background: rgba(23, 26, 29, 0.94);
+  /* 0.55 是刻意的：老安卓基础库不支持 backdrop-filter 时它会退化成"半透明深底"，
+     这个值下白字依然读得清 */
+  background: rgba(23, 26, 29, 0.55);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  backdrop-filter: blur(14px) saturate(180%);
+  border: 1rpx solid rgba(255, 255, 255, 0.16);
   display: flex;
   align-items: center;
   padding: 0 20rpx;
-  box-shadow: 0 24rpx 56rpx rgba(23, 26, 29, 0.35);
+  box-shadow:
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.18),
+    0 20rpx 48rpx rgba(23, 26, 29, 0.28);
   z-index: 100;
 }
+/* 高度必须写死。选中态一旦改变任何一项的高度（字重、行高、内边距），
+   dock 的 align-items:center 就会把内容重新居中，表现为点 tab 时图标上下跳一下。 */
 .item {
   flex: 1;
+  height: 100rpx;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 6rpx;
-  padding: 14rpx 0;
   border-radius: 999rpx;
 }
 .item.on {
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.14);
 }
 .icon-wrap {
   position: relative;
-  line-height: 1;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .icon {
   font-size: 40rpx;
+  line-height: 40rpx;
+  /* 灰化只是绘制差异，不改变盒子尺寸，可以放心在选中态切掉 */
   filter: grayscale(1) brightness(1.6);
-  opacity: 0.75;
+  opacity: 0.8;
 }
 .item.on .icon {
   filter: none;
   opacity: 1;
 }
-.item.on .label {
-  color: #fff;
-  font-weight: 800;
-}
+/* 选中态只改颜色，绝不改 font-weight：粗体在 iOS 上的行盒更高，
+   会让 label 撑高、把同一行的图标顶上去。行高也用 rpx 写死，
+   显式长度不参与字体度量，字重怎么变行盒都是 24rpx。 */
 .label {
   font-size: 20rpx;
+  line-height: 24rpx;
   font-weight: 600;
-  color: #939ba3;
+  color: rgba(255, 255, 255, 0.82);
+}
+.item.on .label {
+  color: #fff;
 }
 .badge {
   position: absolute;

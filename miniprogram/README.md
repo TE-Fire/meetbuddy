@@ -9,6 +9,12 @@
 + 黑胶囊主按钮 `#171A1D` + 大圆角白卡 + 地图化插画（草地形 / 蓝色虚线路线 / 白图钉 / 贴纸）。
 设计令牌集中在 `app.wxss` 的 `page` 选择器里，组件只用类名。
 
+底部悬浮导航（`custom-tab-bar/`）是**透明磨砂玻璃**：半透明墨色底（`rgba(23,26,29,0.55)`）
++ `backdrop-filter: blur(14px) saturate(180%)`，靠模糊身后滚动的内容成膜。
+两点实现约束：① `-webkit-` 前缀必须与无前缀版本**同时写**（iOS WKWebView 只认前缀）；
+② 模糊半径用 **px 不用 rpx**（部分基础库不会在 filter 函数里换算 rpx）。
+老安卓基础库不支持 `backdrop-filter` 时退化成半透明深底，0.55 这个值下白字仍读得清。
+
 ## 运行
 
 1. 用微信开发者工具「导入项目」选择本目录（`miniprogram/`）。
@@ -69,6 +75,11 @@
 统一按当前环境重写，换设备换 WiFi 自愈）和三个页面的 WXML/WXSS。上线配好 HTTPS 后可以改回
 `<image>`，届时把 `imgUrl` 一起下掉。
 
+**海报是例外，不受这条限制**：`pages/poster` 用 canvas 2d 的 `canvas.createImage()` 加载封面，
+走的是 canvas 内部解码而非 `<image>` 组件，所以 http 图片在 iOS 上照常能进图。
+唯一代价是网络图仍需域名白名单，开发者工具勾了「不校验合法域名」即可，上线换 HTTPS 域名后自然满足。
+海报本身的规则见 `docs/07-分享海报.md`。
+
 ## 结构
 
 ```
@@ -82,9 +93,15 @@ pages/login            登录（密码 / 验证码 / 注册）
 pages/feed             发现：分类 chips + 活动卡（地图封面 + 名额进度）
 pages/detail           详情：信息卡 + 报名/取消 + 群聊入口（悬浮报名条）
 pages/create           发布：分卡表单 + 标签选择（地标下拉决定经纬度）
-pages/chat-list        消息列表（未读徽标喂给自定义 tab bar）
+pages/chat-list        消息列表（群聊/私聊分区 + 通知入口，未读徽标喂给自定义 tab bar）
 pages/chat-room        群聊：乐观发送 + ack 确认 + 只读降级（错误码 3104）
 pages/profile          我的：数据卡 + 我发起的 / 我报名的
+pages/credit-log       信用分明细（加减分明细 + 规则说明）
+pages/buddy            找搭子：匹配卡 + 我的需求 + 私聊入口
+pages/notification     通知中心（五类事件 + 徽章解锁，未读红点，WS notify 帧就地刷新）
+pages/badge            我的勋章：8 枚徽章墙，已得/未得置灰 + n/target 进度条
+pages/user-profile     他人主页（组织者卡 / 报名人头像 / 私聊头像进入）：公开资料 + 勋章墙 + 完成统计
+pages/poster           活动分享海报：canvas 2d 出图（封面/标题/时间地点名额/组织者/品牌区）+ 存相册
 ```
 
 ## 与 Flutter 端的已知差异

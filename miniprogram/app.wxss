@@ -280,3 +280,12 @@ page {
   color: var(--muted);
   line-height: 1.6;
 }
+
+/* 头像真图渲染：js 已用 fmt.imgUrl 把地址归一化进 *avatarUrl 字段，WXML 用
+   background-image 铺图（iOS 上 <image> 不加载 http 图，绕行见 docs/08）。
+   仅作用于带 has-img 类的头像容器，首字母态不加该类故文字照常显示。 */
+.has-img {
+  background-size: cover;
+  background-position: center center;
+  color: transparent;
+}

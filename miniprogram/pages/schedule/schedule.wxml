@@ -1,0 +1,44 @@
+<view class="page">
+  <!-- 顶部筛选 -->
+  <view class="seg">
+    <view class="seg-i {{filter === 'all' ? 'on' : ''}}" data-f="all" bindtap="onFilter">全部</view>
+    <view class="seg-i {{filter === 'host' ? 'on' : ''}}" data-f="host" bindtap="onFilter">我发起</view>
+    <view class="seg-i {{filter === 'join' ? 'on' : ''}}" data-f="join" bindtap="onFilter">我报名</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading">加载中…</view>
+
+  <block wx:elif="{{groups.length}}">
+    <view wx:for="{{groups}}" wx:key="key" class="g {{item.past ? 'past' : ''}}">
+      <view class="g-head">
+        <view class="g-dot"></view>
+        <text class="g-label">{{item.label}}</text>
+        <text wx:if="{{item.past}}" class="g-tag">已结束</text>
+      </view>
+      <view
+        wx:for="{{item.items}}"
+        wx:for-item="a"
+        wx:key="id"
+        class="ev {{a.past ? 'past' : ''}}"
+        data-id="{{a.id}}"
+        bindtap="openDetail"
+      >
+        <view class="ev-time">
+          <text class="ev-hm">{{a.timeLabel}}</text>
+          <text class="ev-role {{a.role === 'host' ? 'host' : ''}}">{{a.roleLabel}}</text>
+        </view>
+        <view class="ev-main">
+          <view class="ev-title ellipsis">{{a.icon}} {{a.title}}</view>
+          <view class="ev-meta">{{a.addrShort}} · {{a.statusLabel}} · {{a.currentParticipants}}/{{a.maxParticipants}}人</view>
+        </view>
+        <text class="ev-go">›</text>
+      </view>
+    </view>
+  </block>
+
+  <view wx:else class="empty">
+    <view class="e-icon">🗓️</view>
+    <view class="e-title">还没有安排</view>
+    <view class="e-hint">去发现页发起或报名一个活动，它会自动出现在这里</view>
+  </view>
+</view>

@@ -74,18 +74,20 @@
 
   <!-- 组织者 -->
   <view class="section-title">组织者</view>
-  <view class="card organizer">
-    <view class="avatar">{{a.organizerFirst}}</view>
+  <view class="card organizer" bindtap="openUserProfile" data-id="{{a.organizerId}}">
+    <view class="avatar {{a.organizerAvatar ? 'has-img' : ''}}" style="background-image: url('{{a.organizerAvatarUrl}}')">{{!a.organizerAvatar ? a.organizerFirst : ''}}</view>
     <view class="grow ellipsis">{{a.organizerNickname || '匿名用户'}}</view>
     <view wx:if="{{a.organizer}}" class="tag">我发起的</view>
+    <view class="marr">›</view>
   </view>
+  <view wx:if="{{a.canEdit}}" class="edit-entry" bindtap="editActivity">✏️ 编辑活动（时间 / 地点 / 人数 / 介绍）</view>
 
-  <!-- 报名人 -->
+  <!-- 报名人：点头像或整枚 pill 进对方主页 -->
   <view class="section-title">已报名 {{a.participants.length}} 人 <text class="cap">上限 {{a.maxParticipants}} 人</text></view>
   <view wx:if="{{!a.participants.length}}" class="none">还没有人报名，你是第一个也说不定</view>
   <view wx:else class="pills">
-    <view wx:for="{{a.participants}}" wx:key="id" class="pill card-sm">
-      <view class="mini-avatar">{{item.first}}</view>
+    <view wx:for="{{a.participants}}" wx:key="id" class="pill card-sm" data-id="{{item.userId}}" bindtap="openUserProfile">
+      <view class="mini-avatar {{item.avatar ? 'has-img' : ''}}" style="background-image: url('{{item.avatarUrl}}')">{{!item.avatar ? item.first : ''}}</view>
       <text class="pn">{{item.nickname}}</text>
       <text class="pc">{{item.creditScore}}</text>
     </view>
@@ -96,6 +98,17 @@
 
   <!-- 底部操作条 -->
   <view class="joinbar card">
+    <!-- 海报入口：分享的时机就是"看完觉得不错"，放这里最顺；图标+两字，不占主按钮的位 -->
+    <view class="btn-ghost poster" bindtap="openPoster">
+      <view class="ic-share">
+        <view class="ln ln1"></view>
+        <view class="ln ln2"></view>
+        <view class="dt dt1"></view>
+        <view class="dt dt2"></view>
+        <view class="dt dt3"></view>
+      </view>
+      <text>分享</text>
+    </view>
     <view wx:if="{{a.hasGroup}}" class="btn-ghost chat" bindtap="openChat">
       💬 {{a.signedUp || a.organizer ? '进入群聊' : '看看群聊'}}
     </view>

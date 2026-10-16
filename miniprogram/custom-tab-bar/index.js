@@ -11,16 +11,31 @@ Component({
       { pagePath: '/pages/profile/profile', text: '我的', icon: '🙂' },
     ],
   },
+  lifetimes: {
+    // 首帧就按当前路由定好选中态。组件默认 selected=0，若只靠页面 onShow 事后
+    // setData，切到第 2/3 个 tab 时会先渲染成"发现"高亮、下一帧才闪一下修正。
+    attached() {
+      const pages = getCurrentPages();
+      const cur = pages[pages.length - 1];
+      const route = cur && cur.route ? `/${cur.route}` : '';
+      const i = this.data.tabs.findIndex((t) => t.pagePath === route);
+      if (i > 0) {
+        this.setData({ selected: i });
+      }
+      this.refreshUnread();
+    },
+  },
   methods: {
     setSelected(i) {
       this.setData({ selected: i });
       this.refreshUnread();
     },
     refreshUnread() {
-      // 未读数从全局缓存里取，避免每个 tab 都打一遍接口；
-      // chat-list 页每次 onShow 会调 /api/chat/unread 后写回这里。
+      // 徽标 = 聊天未读 + 通知未读，两者分别由 chat-list / notification 页写进全局，
+      // 各自只更新自己那一半，避免两个页面互相覆盖。
       const app = getApp();
-      this.setData({ unread: app.globalData.unreadTotal || 0 });
+      const total = (app.globalData.unreadChat || 0) + (app.globalData.unreadNotif || 0);
+      this.setData({ unread: total });
     },
     onTap(e) {
       const i = Number(e.currentTarget.dataset.index);

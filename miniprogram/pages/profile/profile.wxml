@@ -1,54 +1,63 @@
 <view class="sky page" wx:if="{{me}}">
-  <view class="avatar" bindtap="editProfile">{{me.first}}<view class="avatar-badge">✏️</view></view>
+  <view class="avatar {{me.avatar ? 'has-img' : ''}}" style="background-image: url('{{me.avatarUrl}}')" bindtap="editProfile">
+    {{!me.avatar ? me.first : ''}}
+    <view class="avatar-badge">✏️</view>
+  </view>
   <view class="nameline">
     <text class="name">{{me.nickname}}</text>
     <view class="lv">信用分 {{me.creditScore}}</view>
   </view>
   <view class="bio" bindtap="editProfile">{{me.bio || '同城组局，找个搭子'}}<text class="bio-edit">编辑</text></view>
 
+  <!-- 数据条兼入口：关注/粉丝进列表，发起/报名滚到下方列表；信用分在昵称旁已有入口 -->
   <view class="card stats">
-    <view class="stat"><text class="v">{{me.creditScore}}</text><text class="l">信用分</text></view>
-    <view class="stat"><text class="v">{{organized.length}}</text><text class="l">我发起的</text></view>
-    <view class="stat"><text class="v">{{joined.length}}</text><text class="l">我报名的</text></view>
+    <view class="stat tap" bindtap="openFollowList" data-tab="following"><text class="v">{{follow.following}}</text><text class="l">关注</text></view>
+    <view class="stat tap" bindtap="openFollowList" data-tab="followers"><text class="v">{{follow.followers}}</text><text class="l">粉丝</text></view>
+    <view class="stat tap" bindtap="jumpTo" data-target="organized"><text class="v">{{organized.length}}</text><text class="l">我发起的</text></view>
+    <view class="stat tap" bindtap="jumpTo" data-target="joined"><text class="v">{{joined.length}}</text><text class="l">我报名的</text></view>
   </view>
 
-  <!-- 功能菜单卡：数据卡下面的那组入口，照原型「我的」页做成白卡 + 彩色圆角图标 + 右箭头 -->
-  <view class="card menu">
-    <view class="mrow" bindtap="jumpTo" data-target="organized">
-      <view class="mic" style="background: var(--brand-soft)">🧾</view>
-      <view class="mtx">我发起的局</view>
-      <view class="mnum">{{organized.length}}</view>
-      <view class="marr">›</view>
+  <!-- 兴趣标签：有则展示芯片，无则引导去添加（匹配权重 0.3 来自标签重合） -->
+  <view wx:if="{{me.tags && me.tags.length}}" class="card tags-card">
+    <view class="tags-title">兴趣标签</view>
+    <view class="tags">
+      <view wx:for="{{me.tags}}" wx:key="*this" class="tag plain">{{item}}</view>
     </view>
-    <view class="mrow" bindtap="jumpTo" data-target="joined">
-      <view class="mic" style="background: var(--grass-soft)">✅</view>
-      <view class="mtx">我参加的局</view>
-      <view class="mnum">{{joined.length}}</view>
-      <view class="marr">›</view>
+  </view>
+  <view wx:else class="card tags-guide" bindtap="editProfile">
+    <view class="tg-icon">🏷️</view>
+    <view class="tg-tx">
+      <view class="tg-t">还没有兴趣标签</view>
+      <view class="tg-s">选几个兴趣，系统更容易帮你匹配合拍的搭子</view>
     </view>
-    <view class="mrow" bindtap="openBuddy">
-      <view class="mic" style="background: var(--warm-bg)">🧭</view>
-      <view class="mtx">找搭子</view>
-      <view class="mstate">匹配附近同好</view>
-      <view class="marr">›</view>
+    <view class="tg-go">＋ 添加</view>
+  </view>
+
+  <!-- 高频入口压成 4 宫格，替代原来 8 行的大菜单卡 -->
+  <view class="card grid">
+    <view class="gitem" bindtap="openSchedule">
+      <view class="gic" style="background: var(--brand-soft)">🗓️</view>
+      <text class="gtx">我的日程</text>
     </view>
-    <view class="mrow" bindtap="openCreditLog">
-      <view class="mic" style="background: #f3eafe">🏆</view>
-      <view class="mtx">信用分明细</view>
-      <view class="mstate">{{me.creditScore}} 分</view>
-      <view class="marr">›</view>
+    <view class="gitem" bindtap="openBuddy">
+      <view class="gic" style="background: var(--grass-soft)">🧭</view>
+      <text class="gtx">找搭子</text>
     </view>
-    <view class="mrow" bindtap="showSource">
-      <view class="mic" style="background: var(--warm-bg)">📡</view>
-      <view class="mtx">数据源</view>
-      <view class="mstate">{{connected ? '实时在线' : '未连接'}}</view>
-      <view class="marr">›</view>
+    <view class="gitem" bindtap="openBadges">
+      <view class="gic" style="background: #f3eafe">🎖️</view>
+      <text class="gtx">我的勋章</text>
     </view>
-    <view class="mrow" bindtap="logout">
-      <view class="mic" style="background: #f3eafe">🚪</view>
-      <view class="mtx">退出登录</view>
-      <view class="marr">›</view>
+    <view class="gitem" bindtap="openCreditLog">
+      <view class="gic" style="background: var(--warm-bg)">🏆</view>
+      <text class="gtx">信用明细</text>
     </view>
+  </view>
+
+  <!-- 低频操作收成一行小字，不再各占一行菜单 -->
+  <view class="lite-row">
+    <text class="lite" bindtap="showSource">📡 数据源 · {{connected ? '在线' : '未连接'}}</text>
+    <text class="lite-sep">·</text>
+    <text class="lite warn" bindtap="logout">退出登录</text>
   </view>
 
   <!-- 我发起的 -->
@@ -95,6 +104,14 @@
     <view class="sheet-x" bindtap="closeEdit">✕</view>
   </view>
 
+  <!-- 滚动区：加了标签建议池后内容超一屏，中间必须能滚，底部按钮才始终可点 -->
+  <scroll-view class="sheet-body" scroll-y>
+  <!-- 头像选择：点开即选图上传，与昵称/简介一起在保存时提交 -->
+  <view class="avatar-pick" bindtap="chooseAvatar">
+    <view class="ap-img {{editForm.avatar ? 'has' : ''}}" style="background-image: url('{{editForm.avatarUrl}}')">{{!editForm.avatar ? me.first : ''}}</view>
+    <view class="ap-tip">点击更换头像</view>
+  </view>
+
   <view class="label">昵称</view>
   <view class="field"><input value="{{editForm.nickname}}" maxlength="20" placeholder="怎么称呼你" bindinput="onEditNick" /></view>
 
@@ -105,6 +122,24 @@
   <picker mode="selector" range="{{genderLabels}}" value="{{editForm.gender}}" bindchange="onEditGender">
     <view class="picker">{{genderLabels[editForm.gender]}} <text class="caret">▾</text></view>
   </picker>
+
+  <!-- 兴趣标签：已选可删、建议池点选、自定义补充，保存时随资料一起提交 -->
+  <view class="label">兴趣标签</view>
+  <view class="tags-hint">选几个兴趣，系统按标签重合度帮你匹配更合拍的搭子</view>
+  <view wx:if="{{editForm.tags.length}}" class="tag-pick">
+    <view wx:for="{{editForm.tags}}" wx:key="*this" class="tp" data-t="{{item}}" bindtap="removeTag">
+      {{item}}<text class="tp-x">✕</text>
+    </view>
+  </view>
+  <view class="tag-suggest">
+    <view wx:for="{{suggestedTags}}" wx:key="name" class="ts {{item.on ? 'on' : ''}}" data-t="{{item.name}}" bindtap="toggleTag">{{item.name}}</view>
+  </view>
+  <view class="tag-add">
+    <input class="ta-in" value="{{tagInput}}" placeholder="自定义，如 摄影" maxlength="10" bindinput="onTagInput" confirm-type="done" bindconfirm="addCustomTag" />
+    <view class="ta-btn" bindtap="addCustomTag">添加</view>
+  </view>
+  <view class="tag-count">{{editForm.tags.length}}/20</view>
+  </scroll-view>
 
   <view class="sheet-actions">
     <view class="btn-ghost" bindtap="closeEdit">取消</view>

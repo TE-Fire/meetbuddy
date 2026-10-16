@@ -101,6 +101,34 @@
   font-weight: 800;
 }
 
+/* —— 排序 tab —— */
+.sorts {
+  display: flex;
+  gap: 16rpx;
+  padding: 22rpx 40rpx 0;
+  box-sizing: border-box;
+}
+.sort {
+  padding: 12rpx 30rpx;
+  border-radius: 999rpx;
+  background: #fff;
+  border: 3rpx solid var(--line);
+  font-size: 25rpx;
+  font-weight: 600;
+  color: var(--ink-2);
+  line-height: 1.2;
+}
+.sort.on {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: var(--shadow-glow);
+}
+.sort.disabled {
+  opacity: 0.4;
+}
+
 /* —— 活动卡 —— */
 .list {
   padding: 34rpx 36rpx 0;

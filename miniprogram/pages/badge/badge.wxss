@@ -1,0 +1,99 @@
+.summary {
+  margin: 24rpx 32rpx 44rpx;
+  padding: 48rpx 40rpx;
+  text-align: center;
+}
+.s-num {
+  font-size: 76rpx;
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1.1;
+}
+.s-total {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--muted);
+}
+.s-label {
+  margin-top: 8rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.s-hint {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: var(--muted);
+}
+
+.section-title {
+  margin: 0 32rpx 24rpx;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24rpx;
+  padding: 0 32rpx;
+}
+.bcard {
+  width: calc((100% - 24rpx) / 2);
+  box-sizing: border-box;
+  padding: 36rpx 24rpx 32rpx;
+  text-align: center;
+}
+.bcard.got {
+  background: linear-gradient(180deg, #ffffff 0%, var(--grass-soft) 100%);
+}
+.bicon {
+  font-size: 68rpx;
+  line-height: 1.2;
+}
+.bcard.lock .bicon {
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+.bname {
+  margin-top: 14rpx;
+  font-size: 28rpx;
+  font-weight: 800;
+  color: var(--ink);
+}
+.bcard.lock .bname {
+  color: var(--muted);
+}
+.bdesc {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: var(--muted);
+  line-height: 1.45;
+  min-height: 64rpx;
+}
+.bdate {
+  margin-top: 18rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: var(--grass-ink);
+}
+.bdate.muted {
+  color: var(--muted);
+  font-weight: 600;
+}
+.bcard .progress {
+  margin-top: 20rpx;
+}
+
+.loading {
+  padding: 80rpx 0;
+  text-align: center;
+  font-size: 26rpx;
+  color: var(--muted);
+}
+
+.foot {
+  padding: 56rpx 48rpx 72rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--muted);
+  line-height: 1.6;
+}

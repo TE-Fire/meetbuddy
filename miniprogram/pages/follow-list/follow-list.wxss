@@ -1,0 +1,97 @@
+.page {
+  padding: 24rpx 0 60rpx;
+}
+
+.tabs {
+  display: flex;
+  gap: 12rpx;
+  margin: 8rpx 32rpx 24rpx;
+}
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  font-weight: 800;
+  color: var(--muted);
+  background: var(--field-bg);
+}
+.tab.on {
+  background: var(--ink);
+  color: #fff;
+}
+
+.rows {
+  padding: 0 32rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 24rpx 28rpx;
+}
+.avatar {
+  width: 96rpx;
+  height: 96rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), #6fd0ff);
+  color: #fff;
+  font-size: 42rpx;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatar.has-img {
+  background-size: cover;
+  background-position: center;
+}
+.rinfo {
+  flex: 1;
+  min-width: 0;
+}
+.rname {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--ink);
+}
+.rmeta {
+  margin-top: 8rpx;
+  font-size: 23rpx;
+  color: var(--muted);
+}
+.marr {
+  color: var(--muted);
+  font-size: 32rpx;
+}
+
+.empty {
+  margin: 120rpx 32rpx 0;
+  text-align: center;
+  padding: 60rpx 40rpx;
+}
+.empty .icon {
+  font-size: 80rpx;
+}
+.empty .title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 20rpx 0 12rpx;
+}
+.empty .hint {
+  font-size: 25rpx;
+  color: var(--muted);
+}
+
+.foot {
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--muted);
+  padding: 36rpx 0;
+}

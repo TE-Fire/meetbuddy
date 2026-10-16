@@ -12,9 +12,12 @@ function decorate(a) {
     timeText: a.endTime ? `${start} — ${end}` : start,
     statusText: fmt.statusLabel(a.status),
     statusTone: fmt.statusTone(a.status),
+    // 组织者且活动未开始（OPEN/FULL）才可编辑；已开始/结束由后端兜底拒绝
+    canEdit: a.organizer && (a.status === 'OPEN' || a.status === 'FULL'),
     ratio: a.maxParticipants > 0 ? Math.min(1, a.currentParticipants / a.maxParticipants) : 0,
     full: a.currentParticipants >= a.maxParticipants,
     organizerFirst: a.organizerNickname ? a.organizerNickname[0] : '?',
+    organizerAvatarUrl: fmt.imgUrl(a.organizerAvatar),
     slotsLeft: Math.max(0, (a.maxParticipants || 0) - (a.currentParticipants || 0)),
     // 配图地址归一化 + 包成对象（wx:key 用 src，同时给 background-image 方案留好字段），
     // 原因同 feed 封面：iOS 微信 8.0.58+ 的 <image> 不渲染 http 图片
@@ -22,6 +25,7 @@ function decorate(a) {
     participants: (a.participants || []).map((p) => ({
       ...p,
       first: (p.nickname || '?')[0],
+      avatarUrl: fmt.imgUrl(p.avatar),
     })),
   };
 }
@@ -133,6 +137,27 @@ Page({
     wx.navigateTo({
       url: `/pages/chat-room/chat-room?groupId=${a.groupId}&title=${encodeURIComponent(a.title)}&readonly=${a.status === 'CANCELLED' || a.status === 'FINISHED' ? 1 : 0}`,
     });
+  },
+
+  /** 生成分享海报：纯前端 canvas 出图，规则见 docs/07-分享海报.md */
+  openPoster() {
+    const { a } = this.data;
+    if (!a) return;
+    wx.navigateTo({ url: `/pages/poster/poster?id=${a.id}` });
+  },
+
+  /** 组织者卡 / 已报名人 → 他人主页（点自己也进得去，相当于预览"别人眼中的我"） */
+  openUserProfile(e) {
+    const id = e.currentTarget.dataset.id;
+    if (!id) return;
+    wx.navigateTo({ url: `/pages/user-profile/user-profile?id=${id}` });
+  },
+
+  /** 编辑活动：仅组织者且未开始（OPEN/FULL）可见，后端再次兜底权限与状态 */
+  editActivity() {
+    const { a } = this.data;
+    if (!a || !a.canEdit) return;
+    wx.navigateTo({ url: `/pages/activity-edit/activity-edit?id=${a.id}` });
   },
 
   /** 举报活动：先选原因，再确认，避免误触 */

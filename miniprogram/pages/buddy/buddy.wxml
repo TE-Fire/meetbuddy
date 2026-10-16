@@ -28,7 +28,7 @@ module.exports = {
     <block wx:elif="{{matches.length}}">
       <view wx:for="{{matches}}" wx:key="requestId" class="mcard card">
         <view class="mhead">
-          <view class="mavatar">{{item.nickname ? item.nickname[0] : '?'}}</view>
+          <view class="mavatar {{item.avatarUrl ? 'has-img' : ''}}" style="background-image: url('{{item.avatarUrl}}')">{{!item.avatarUrl ? (item.nickname ? item.nickname[0] : '?') : ''}}</view>
           <view class="minfo">
             <view class="mname ellipsis">{{item.nickname}}</view>
             <view class="mmeta">信用分 {{item.creditScore}} · {{item.distanceText}}</view>

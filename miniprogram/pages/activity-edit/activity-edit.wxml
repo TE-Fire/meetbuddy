@@ -1,0 +1,165 @@
+<wxs module="m">
+module.exports = {
+  has: function (arr, v) { return arr.indexOf(v) >= 0; }
+};
+</wxs>
+
+<view class="sky page" wx:if="{{!error}}">
+  <view class="display">调整一下，<text class="hl">改期改地</text></view>
+  <view class="display-sub">改完会即时同步到活动页，已报名的人会看到新信息</view>
+
+  <view class="card box">
+    <view class="label">局的名字</view>
+    <view class="field"><input maxlength="30" placeholder="例：国贸剧本杀·硬核本" value="{{title}}" bindinput="onTitle" /></view>
+    <view class="counter">{{title.length}}/30</view>
+  </view>
+
+  <view class="card box">
+    <view class="label">分类</view>
+    <view class="chips-wrap">
+      <view
+        wx:for="{{categories}}"
+        wx:key="*this"
+        class="chip {{category === item ? 'on' : ''}}"
+        data-c="{{item}}"
+        bindtap="pickCategory"
+      >{{item}}</view>
+    </view>
+  </view>
+
+  <view class="card box time-card" bindtap="openTime">
+    <view class="label">时间<text class="label-tip">点按设置</text></view>
+    <view wx:if="{{startText === '选择时间'}}" class="time-empty">点此设置活动时间 ▾</view>
+    <view wx:else class="time-row2">
+      <view class="tcol"><text class="tl">开始</text><text class="tv">{{startText}}</text></view>
+      <view class="tcol"><text class="tl">结束</text><text class="tv">{{endText}}</text></view>
+      <view class="tcol dur"><text class="tl">时长</text><text class="tv">{{timeDur}}</text></view>
+    </view>
+  </view>
+
+  <view class="card box">
+    <view class="label">地点</view>
+    <picker mode="selector" range="{{venueNames}}" value="{{venueIndex}}" bindchange="onVenue">
+      <view class="picker">{{venueNames[venueIndex]}} <text class="caret">▾</text></view>
+    </picker>
+    <view class="field mt"><input placeholder="详细地址（选填）例：4F 星巴克门口集合" value="{{address}}" bindinput="onAddress" /></view>
+  </view>
+
+  <view class="card box">
+    <view class="label">人数与门槛</view>
+    <view class="srow">
+      <text class="slabel">最多 {{maxParticipants}} 人</text>
+      <view class="stepper">
+        <view class="step" data-d="-1" bindtap="onMax" data-min="{{minParticipants}}" data-max="200">−</view>
+        <text class="snum">{{maxParticipants}}</text>
+        <view class="step" data-d="1" bindtap="onMax" data-min="{{minParticipants}}" data-max="200">＋</view>
+      </view>
+    </view>
+    <view class="srow">
+      <text class="slabel">信用分门槛 {{creditRequired}}</text>
+      <view class="stepper">
+        <view class="step" data-d="-5" bindtap="onCredit" data-min="0" data-max="100">−</view>
+        <text class="snum">{{creditRequired}}</text>
+        <view class="step" data-d="5" bindtap="onCredit" data-min="0" data-max="100">＋</view>
+      </view>
+    </view>
+    <view wx:if="{{minParticipants > 1}}" class="hint">已有 {{minParticipants}} 人报名，人数上限不能低于此值</view>
+  </view>
+
+  <view class="card box">
+    <view class="label">标签（可多选）</view>
+    <view class="chips-wrap">
+      <view
+        wx:for="{{tagPool}}"
+        wx:key="*this"
+        class="chip {{m.has(tags, item) ? 'on' : ''}}"
+        data-t="{{item}}"
+        bindtap="toggleTag"
+      >{{item}}</view>
+    </view>
+  </view>
+
+  <view class="card box">
+    <view class="label">活动介绍（选填）</view>
+    <view class="field area">
+      <textarea maxlength="300" placeholder="集合方式、费用、需要带什么，写清楚能少一半的来回问" value="{{desc}}" bindinput="onDesc" />
+    </view>
+  </view>
+
+  <view class="card box">
+    <view class="label">活动配图<text class="label-tip">最多 9 张，第一张是封面</text></view>
+    <view class="img-grid">
+      <view wx:for="{{images}}" wx:key="*this" class="img-cell">
+        <view class="img-thumb" style="background-image: url('{{item}}')"></view>
+        <view wx:if="{{index === 0}}" class="img-cover">封面</view>
+        <view class="img-rm" catchtap="removeImage" data-i="{{index}}">✕</view>
+      </view>
+      <view wx:if="{{images.length < 9}}" class="img-add" bindtap="chooseImage">
+        <text class="img-plus">{{uploading ? '…' : '＋'}}</text>
+        <text class="img-add-tip">{{uploading ? '上传中' : '加图'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="tip">
+    <text>ℹ️ 只改想动的字段即可，其余保持原样。提交后活动状态不变（仍是对外可报名）。</text>
+  </view>
+
+  <view class="btn-black {{submitting ? 'disabled' : ''}}" bindtap="submit">{{submitting ? '保存中…' : '保存修改'}}</view>
+</view>
+
+<view class="sky page" wx:elif="{{error}}">
+  <view class="empty card">
+    <view class="icon">📡</view>
+    <view class="title">{{error}}</view>
+    <view class="btn-ghost retry" bindtap="loadDetail">重试</view>
+  </view>
+</view>
+
+<!-- ============ 时间选择：区间滑动面板 ============ -->
+<view class="mask {{showTime ? 'show' : ''}}" bindtap="closeTime"></view>
+<view class="sheet {{showTime ? 'show' : ''}}" catchtouchmove="noop">
+  <view class="sheet-grip"></view>
+  <view class="sheet-head">
+    <text class="sheet-title">选择活动时间</text>
+    <view class="sheet-x" bindtap="closeTime">✕</view>
+  </view>
+
+  <view class="label rs-label">日期</view>
+  <view class="chips-wrap rs-dates">
+    <view
+      wx:for="{{rsDates}}"
+      wx:key="label"
+      class="chip {{rsDateIdx === index ? 'on' : ''}}"
+      data-i="{{index}}"
+      bindtap="pickRsDate"
+    >{{item.label}}</view>
+  </view>
+
+  <view class="rs-readout">
+    <text class="rs-start">{{rsStartTxt}}</text>
+    <text class="rs-dur">共 {{rsDur}}</text>
+    <text class="rs-end">{{rsEndTxt}}</text>
+  </view>
+
+  <view class="rs-track" catchtouchmove="onRsMove" bindtouchend="onRsEnd">
+    <view class="rs-fill" style="left:{{rsStartPct}}%;right:{{100 - rsEndPct}}%"></view>
+    <view class="rs-tick" style="left:0%"></view>
+    <view class="rs-tick" style="left:25%"></view>
+    <view class="rs-tick" style="left:50%"></view>
+    <view class="rs-tick" style="left:75%"></view>
+    <view class="rs-tick" style="left:100%"></view>
+    <text class="rs-tag" style="left:{{rsStartPct}}%">{{rsStartTag}}</text>
+    <text class="rs-tag" style="left:{{rsEndPct}}%">{{rsEndTag}}</text>
+    <view class="rs-handle" style="left:{{rsStartPct}}%" bindtouchstart="onRsDown" data-h="start"></view>
+    <view class="rs-handle" style="left:{{rsEndPct}}%" bindtouchstart="onRsDown" data-h="end"></view>
+  </view>
+  <view class="rs-scale">
+    <text>0:00</text><text>6:00</text><text>12:00</text><text>18:00</text><text>24:00</text>
+  </view>
+
+  <view class="sheet-actions">
+    <view class="btn-ghost" bindtap="closeTime">取消</view>
+    <view class="btn-black" bindtap="confirmTime">确定</view>
+  </view>
+</view>

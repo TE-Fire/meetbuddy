@@ -3,12 +3,19 @@
     "pages/feed/feed",
     "pages/chat-list/chat-list",
     "pages/profile/profile",
+    "pages/schedule/schedule",
     "pages/login/login",
     "pages/detail/detail",
     "pages/create/create",
+    "pages/activity-edit/activity-edit",
     "pages/chat-room/chat-room",
     "pages/credit-log/credit-log",
-    "pages/buddy/buddy"
+    "pages/buddy/buddy",
+    "pages/notification/notification",
+    "pages/badge/badge",
+    "pages/user-profile/user-profile",
+    "pages/follow-list/follow-list",
+    "pages/poster/poster"
   ],
   "window": {
     "navigationBarBackgroundColor": "#DDF0FC",

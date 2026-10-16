@@ -41,6 +41,17 @@
     >{{item}}</view>
   </scroll-view>
 
+  <!-- 排序 tab -->
+  <view class="sorts">
+    <view
+      wx:for="{{sorts}}"
+      wx:key="key"
+      class="sort {{sortBy === item.key ? 'on' : ''}} {{item.key === 'distance' && !geoEnabled ? 'disabled' : ''}}"
+      data-s="{{item.key}}"
+      bindtap="onSort"
+    >{{item.label}}</view>
+  </view>
+
   <view wx:if="{{geoEnabled}}" class="geo-bar">
     <text>演示坐标：北京国贸 · 半径 {{radius}} km</text>
     <text class="change">改半径 ›</text>

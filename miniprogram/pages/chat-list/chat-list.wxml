@@ -4,6 +4,17 @@
     <text>{{connected ? '实时在线' : '连接中…'}}</text>
   </view>
 
+  <!-- 通知入口：未读数来自 /api/notification/unread，与 tab 徽标同源 -->
+  <view class="notify-entry card-sm" bindtap="openNotifications">
+    <view class="ne-icon">🔔</view>
+    <view class="ne-body">
+      <view class="ne-title">通知</view>
+      <view class="ne-hint">报名提醒 · 活动取消 · 开始前提醒</view>
+    </view>
+    <view wx:if="{{notifUnread > 0}}" class="ne-badge">{{notifUnread > 99 ? '99+' : notifUnread}}</view>
+    <text wx:else class="ne-arrow">›</text>
+  </view>
+
   <block wx:if="{{groups.length || sessions.length}}">
     <block wx:if="{{groups.length}}">
       <view class="sec-title">群聊</view>
@@ -36,7 +47,7 @@
         data-s="{{item}}"
         bindtap="openSession"
       >
-        <view class="sava">{{item.first}}</view>
+        <view class="sava {{item.avatarUrl ? 'has-img' : ''}}" catchtap="openPeerProfile" data-id="{{item.peerId}}" style="background-image: url('{{item.avatarUrl}}')">{{!item.avatarUrl ? item.first : ''}}</view>
         <view class="gbody">
           <view class="grow ellipsis gname">{{item.peerNickname}}</view>
           <view class="glast ellipsis">{{item.lastText}}</view>

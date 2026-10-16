@@ -103,6 +103,12 @@
   gap: 24rpx;
   margin-bottom: 44rpx;
 }
+/* 组织者卡右侧的跳转箭头：整卡可点进他人主页，给个可见的 affordance */
+.organizer .marr {
+  color: var(--muted);
+  font-size: 36rpx;
+  flex-shrink: 0;
+}
 .avatar {
   width: 84rpx;
   height: 84rpx;
@@ -180,6 +186,56 @@
   padding: 0 34rpx;
   font-size: 28rpx;
 }
+/* 海报入口：图标 + "分享"，一眼能看出是分享，宽度仍远小于报名主按钮 */
+.joinbar .btn-ghost.poster {
+  flex: 0 0 auto;
+  padding: 0 26rpx;
+  font-size: 28rpx;
+}
+/* 分享图标（三点连线，通用分享符号）：用 currentColor 画，跟随按钮文字色；不用 emoji，
+   emoji 在不同机型渲染大小不一，且"图片"类 emoji 会被读成"看图"而不是"分享" */
+.ic-share {
+  position: relative;
+  flex: 0 0 auto;
+  width: 38rpx;
+  height: 38rpx;
+}
+.ic-share .ln {
+  position: absolute;
+  left: 6rpx;
+  width: 28rpx;
+  height: 4rpx;
+  border-radius: 2rpx;
+  background: currentColor;
+  transform-origin: 0 50%;
+}
+.ic-share .ln1 {
+  top: 6rpx;
+  transform: rotate(24deg);
+}
+.ic-share .ln2 {
+  top: 28rpx;
+  transform: rotate(-24deg);
+}
+.ic-share .dt {
+  position: absolute;
+  width: 13rpx;
+  height: 13rpx;
+  border-radius: 50%;
+  background: currentColor;
+}
+.ic-share .dt1 {
+  left: 0;
+  top: 2rpx;
+}
+.ic-share .dt2 {
+  left: 0;
+  top: 23rpx;
+}
+.ic-share .dt3 {
+  left: 25rpx;
+  top: 13rpx;
+}
 .danger {
   color: #eb4d5c;
 }
@@ -189,6 +245,17 @@
   font-size: 24rpx;
   color: var(--muted);
   text-align: center;
+}
+/* 编辑入口：在组织者卡下方，brand 色调，一眼是"我可改这个局" */
+.edit-entry {
+  margin: 18rpx auto 200rpx;
+  padding: 24rpx 32rpx;
+  width: fit-content;
+  border-radius: 999rpx;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  font-size: 25rpx;
+  font-weight: 700;
 }
 .retry {
   margin-top: 30rpx;

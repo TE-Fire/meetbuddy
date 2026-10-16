@@ -7,6 +7,9 @@ App({
   globalData: {
     me: null,
     connected: false,
+    // tab 徽标 = 聊天未读 + 通知未读，分别由 chat-list / notification 页维护
+    unreadChat: 0,
+    unreadNotif: 0,
   },
 
   onLaunch() {

@@ -1,0 +1,40 @@
+<view class="sky page">
+  <view class="np-head card-sm">
+    <text class="np-title">🔔 通知</text>
+    <view class="np-actions">
+      <text wx:if="{{unread > 0}}" class="np-unread">{{unread > 99 ? '99+' : unread}} 条未读</text>
+      <view class="np-all" bindtap="markAll">全部已读</view>
+    </view>
+  </view>
+
+  <block wx:if="{{list.length}}">
+    <view
+      wx:for="{{list}}"
+      wx:key="id"
+      class="n-item card-sm {{item.readStatus ? '' : 'unread'}}"
+      data-n="{{item}}"
+      bindtap="tapItem"
+    >
+      <view class="n-icon n-{{item.tint}}">{{item.icon}}</view>
+      <view class="n-body">
+        <view class="n-row">
+          <text class="n-title ellipsis">{{item.title}}</text>
+          <text class="n-time">{{item.agoText}}</text>
+        </view>
+        <view class="n-content">{{item.content}}</view>
+        <view wx:if="{{item.jumpable}}" class="n-link">查看活动 ›</view>
+      </view>
+      <view wx:if="{{!item.readStatus}}" class="n-dot"></view>
+    </view>
+    <view wx:if="{{!finished}}" class="n-more">加载中…</view>
+    <view wx:else class="n-end">没有更多了</view>
+  </block>
+
+  <view wx:elif="{{!loading}}" class="empty card">
+    <view class="icon">🔭</view>
+    <view class="title">还没有通知</view>
+    <view class="hint">有人报名你的活动、活动被取消、或活动即将开始时，这里都会提醒你</view>
+  </view>
+
+  <view wx:else class="loading">加载中…</view>
+</view>

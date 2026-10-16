@@ -1,0 +1,44 @@
+<!-- 分享海报：canvas 2d 出图，存相册。规则见 docs/07-分享海报.md -->
+<view class="sky page" wx:if="{{ready}}">
+  <view class="head">
+    <view class="display">分享海报</view>
+    <view class="display-sub">存到相册，发到朋友圈或群里</view>
+  </view>
+
+  <!-- 画布按 750×1240 设计坐标绘制，位图（backing store）按 dpr 放大，导出即全分辨率。
+       预览不靠 transform：直接把 canvas 的 CSS 盒子设成预览尺寸，由 canvas 自己把位图缩进盒子。
+       ⚠ 不能用 CSS transform: scale() 缩——canvas 2d 在 iOS 上是同层渲染的原生层，
+       transform 会被忽略，画布按 1:1 铺满屏幕并溢出父容器（实测：整张海报大到只能看见左上角）。 -->
+  <view class="stage" style="width: {{stageW}}px; height: {{stageH}}px;">
+    <canvas
+      type="2d"
+      id="poster"
+      class="canvas"
+      style="width: {{stageW}}px; height: {{stageH}}px;"
+    ></canvas>
+  </view>
+
+  <view class="hint">朋友在微信里搜「搭子」就能找到这个小程序</view>
+
+  <view class="actions">
+    <view class="btn-black {{saving ? 'disabled' : ''}}" bindtap="save">
+      {{saving ? '正在保存…' : '保存到相册'}}
+    </view>
+  </view>
+</view>
+
+<view class="sky page" wx:elif="{{error}}">
+  <view class="empty card">
+    <view class="icon">🖼️</view>
+    <view class="title">{{error}}</view>
+    <view class="btn-ghost retry" bindtap="load">重试</view>
+  </view>
+</view>
+
+<view class="sky page" wx:else>
+  <view class="empty card">
+    <view class="icon">🎨</view>
+    <view class="title">正在生成海报…</view>
+    <view class="hint">有配图的话会慢一点点</view>
+  </view>
+</view>

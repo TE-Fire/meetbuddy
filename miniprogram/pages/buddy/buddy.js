@@ -55,6 +55,7 @@ Page({
           // score 是 [0,1] 的小数，直接显示两位小数太技术化，转成百分比
           scorePct: Math.round((m.score || 0) * 100) + '%',
           distanceText: m.distance < 1 ? `${Math.round(m.distance * 1000)} m` : `${m.distance.toFixed(1)} km`,
+          avatarUrl: fmt.imgUrl(m.avatar),
         })),
         matchLoading: false,
       });

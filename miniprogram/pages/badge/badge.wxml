@@ -1,0 +1,35 @@
+<view class="sky page">
+  <view class="summary card">
+    <view class="s-num">{{earned}}<text class="s-total"> / {{total}}</text></view>
+    <view class="s-label">已获得勋章</view>
+    <view class="s-hint">报名、组局、守约，都会沉淀成勋章</view>
+  </view>
+
+  <view class="section-title">全部勋章</view>
+
+  <view wx:if="{{loading}}" class="loading">加载中…</view>
+  <view wx:elif="{{!badges.length}}" class="empty card">
+    <view class="icon">🏅</view>
+    <view class="title">暂无勋章数据</view>
+    <view class="hint">下拉刷新试试</view>
+  </view>
+  <view wx:else class="grid">
+    <view
+      wx:for="{{badges}}"
+      wx:key="code"
+      class="bcard card-sm {{item.unlocked ? 'got' : 'lock'}}"
+    >
+      <view class="bicon">{{item.icon}}</view>
+      <view class="bname">{{item.name}}</view>
+      <view class="bdesc">{{item.desc}}</view>
+      <view wx:if="{{item.unlocked}}" class="bdate">{{item.dateText}} 获得</view>
+      <view wx:elif="{{item.showProgress}}" class="progress">
+        <view class="bar"><i style="width: {{item.pct}}%"></i></view>
+        <text class="num">{{item.progress}}/{{item.target}}</text>
+      </view>
+      <view wx:else class="bdate muted">未解锁</view>
+    </view>
+  </view>
+
+  <view class="foot">报名、首次组局即时获得；其余在活动结束后自动评定，达成会发通知</view>
+</view>

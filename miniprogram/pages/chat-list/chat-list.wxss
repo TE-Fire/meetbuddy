@@ -111,3 +111,59 @@
   color: var(--muted);
   padding-top: 200rpx;
 }
+
+/* ============ 通知入口 ============ */
+.notify-entry {
+  margin-top: 26rpx;
+  padding: 26rpx 30rpx;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  transition: transform 0.18s cubic-bezier(0.22, 0.8, 0.26, 1);
+}
+.notify-entry:active {
+  transform: scale(0.98);
+}
+.ne-icon {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(150deg, #ffd9a8, #ff9d5c);
+  box-shadow: var(--shadow-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38rpx;
+  flex-shrink: 0;
+}
+.ne-body {
+  flex: 1;
+  min-width: 0;
+}
+.ne-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: var(--ink);
+}
+.ne-hint {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: var(--muted);
+}
+.ne-badge {
+  min-width: 36rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  background: var(--hot);
+  color: #fff;
+  font-size: 21rpx;
+  font-weight: 800;
+  text-align: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+.ne-arrow {
+  font-size: 34rpx;
+  color: var(--muted);
+  flex-shrink: 0;
+}

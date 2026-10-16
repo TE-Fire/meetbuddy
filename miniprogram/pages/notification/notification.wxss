@@ -1,0 +1,131 @@
+.page {
+  padding: 24rpx 36rpx 220rpx;
+}
+
+/* ============ 头部：标题 + 未读统计 + 全部已读 ============ */
+.np-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 26rpx 30rpx;
+}
+.np-title {
+  font-size: 33rpx;
+  font-weight: 800;
+  color: var(--ink);
+}
+.np-actions {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+.np-unread {
+  font-size: 23rpx;
+  font-weight: 700;
+  color: var(--hot);
+}
+.np-all {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--brand-deep);
+  padding: 10rpx 22rpx;
+  border-radius: 999rpx;
+  background: var(--brand-soft, #e8f4fd);
+  transition: transform 0.18s cubic-bezier(0.22, 0.8, 0.26, 1);
+}
+.np-all:active {
+  transform: scale(0.94);
+}
+
+/* ============ 通知卡片 ============ */
+.n-item {
+  margin-top: 22rpx;
+  padding: 28rpx 30rpx;
+  display: flex;
+  align-items: flex-start;
+  gap: 24rpx;
+  position: relative;
+  transition: transform 0.18s cubic-bezier(0.22, 0.8, 0.26, 1);
+}
+.n-item:active {
+  transform: scale(0.98);
+}
+.n-item.unread {
+  border-left: 6rpx solid var(--brand-deep);
+}
+.n-icon {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38rpx;
+  flex-shrink: 0;
+}
+.n-icon.n-grass {
+  background: var(--grass-soft);
+}
+.n-icon.n-warm {
+  background: var(--warm-soft, #fdeee2);
+}
+.n-icon.n-sky {
+  background: var(--brand-soft, #e8f4fd);
+}
+.n-icon.n-plain {
+  background: var(--field-bg);
+}
+.n-body {
+  flex: 1;
+  min-width: 0;
+}
+.n-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+.n-title {
+  font-size: 29rpx;
+  font-weight: 800;
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+}
+.n-time {
+  font-size: 21rpx;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.n-content {
+  margin-top: 8rpx;
+  font-size: 25rpx;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.n-link {
+  margin-top: 10rpx;
+  font-size: 23rpx;
+  font-weight: 700;
+  color: var(--brand-deep);
+}
+.n-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: var(--hot);
+  flex-shrink: 0;
+  margin-top: 8rpx;
+}
+.n-more,
+.n-end {
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--muted);
+  padding: 30rpx 0;
+}
+.loading {
+  text-align: center;
+  color: var(--muted);
+  padding-top: 200rpx;
+}
