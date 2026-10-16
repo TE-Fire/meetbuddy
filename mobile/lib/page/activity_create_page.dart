@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../app_scope.dart';
 import '../model/activity_draft.dart';
 import '../model/api_exception.dart';
+import '../model/venue.dart';
 import '../state/activity_state.dart';
 import '../widget/ui.dart';
 
@@ -12,6 +13,7 @@ import '../widget/ui.dart';
 /// 坐标没有走地图选点（那要引地图 SDK + 原生定位，与本机"先浏览器预览"的约束冲突），
 /// 改成"选一个地标 + 填详细地址"，地标负责给 GEO 一个真实的经纬度。
 /// 后端的 GEO 匹配、半径筛选因此都是真跑，只是取点方式简化了。
+/// 地标清单见 [kVenues]——编辑页用的是同一份。
 class ActivityCreatePage extends StatefulWidget {
   const ActivityCreatePage({super.key});
 
@@ -19,35 +21,13 @@ class ActivityCreatePage extends StatefulWidget {
   State<ActivityCreatePage> createState() => _ActivityCreatePageState();
 }
 
-class _Venue {
-  const _Venue(this.name, this.address, this.lng, this.lat);
-
-  final String name;
-  final String address;
-  final double lng;
-  final double lat;
-}
-
 class _ActivityCreatePageState extends State<ActivityCreatePage> {
-  static const List<_Venue> _venues = <_Venue>[
-    _Venue('国贸商城', '朝阳区建国门外大街 1 号', 116.4610, 39.9088),
-    _Venue('三里屯太古里', '朝阳区三里屯路 19 号', 116.4550, 39.9330),
-    _Venue('奥林匹克森林公园', '朝阳区科荟路 33 号', 116.3920, 40.0200),
-    _Venue('五道口购物中心', '海淀区成府路 28 号', 116.3370, 39.9930),
-    _Venue('南锣鼓巷', '东城区南锣鼓巷', 116.4040, 39.9370),
-    _Venue('常营体育公园', '朝阳区常营北路', 116.5900, 39.9250),
-  ];
-
-  static const List<String> _tagPool = <String>[
-    '新手友好', '硬核', '深夜局', 'AA制', '免费', '带装备', '轻运动', '拍照',
-  ];
-
   final _formKey = GlobalKey<FormState>();
   final _title = TextEditingController();
   final _address = TextEditingController();
   final _desc = TextEditingController();
 
-  _Venue _venue = _venues.first;
+  Venue _venue = kVenues.first;
   String _category = ActivityState.categories.first;
   DateTime? _start;
   DateTime? _end;
@@ -177,13 +157,10 @@ class _ActivityCreatePageState extends State<ActivityCreatePage> {
 
               _card(
                 children: <Widget>[
-                  TextFormField(
+                  AppField(
                     controller: _title,
                     maxLength: 30,
-                    decoration: const InputDecoration(
-                      labelText: '活动标题',
-                      hintText: '例：国贸剧本杀·硬核本',
-                    ),
+                    hintText: '例：国贸剧本杀·硬核本',
                     validator: (v) => (v == null || v.trim().length < 2) ? '至少写两个字' : null,
                   ),
                 ],
@@ -238,25 +215,36 @@ class _ActivityCreatePageState extends State<ActivityCreatePage> {
               _card(
                 children: <Widget>[
                   const _FieldLabel('地点', first: true),
-                  DropdownButtonFormField<_Venue>(
+                  // 下拉框没有换成 AppField——它选的是对象而不是文本，
+                  // AppField 的 TextEditingController 那套用不上。但轮廓必须跟上：
+                  // 走全局 inputDecorationTheme（边框已压深到 #DEEBF4，与 AppField 常态一致），
+                  // 并加同一个 place 图标。缺这个图标的话，它在表单里会像少了一颗牙。
+                  DropdownButtonFormField<Venue>(
                     initialValue: _venue,
-                    decoration: const InputDecoration(labelText: '附近地标（决定经纬度）'),
-                    items: <DropdownMenuItem<_Venue>>[
-                      for (final v in _venues)
-                        DropdownMenuItem<_Venue>(
+                    decoration: const InputDecoration(
+                      labelText: '附近地标（决定经纬度）',
+                      prefixIcon: Icon(Icons.place_rounded, size: 20),
+                    ),
+                    borderRadius: BorderRadius.circular(AppBrand.rSm),
+                    icon: const Icon(Icons.expand_more_rounded, color: AppBrand.muted),
+                    style: const TextStyle(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppBrand.ink,
+                    ),
+                    items: <DropdownMenuItem<Venue>>[
+                      for (final v in kVenues)
+                        DropdownMenuItem<Venue>(
                           value: v,
-                          child: Text('${v.name} · ${v.address}', overflow: TextOverflow.ellipsis),
+                          child: Text(v.fullName, overflow: TextOverflow.ellipsis),
                         ),
                     ],
-                    onChanged: (v) => setState(() => _venue = v ?? _venues.first),
+                    onChanged: (v) => setState(() => _venue = v ?? kVenues.first),
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
+                  AppField(
                     controller: _address,
-                    decoration: const InputDecoration(
-                      labelText: '详细地址（选填）',
-                      hintText: '例：4F 星巴克门口集合',
-                    ),
+                    hintText: '例：4F 星巴克门口集合',
                   ),
                 ],
               ),
@@ -283,34 +271,30 @@ class _ActivityCreatePageState extends State<ActivityCreatePage> {
                     display: '${_creditRequired.round()}',
                     onChanged: (v) => setState(() => _creditRequired = v),
                   ),
-                  const _FieldLabel('标签（可多选）'),
-                  Wrap(
-                    spacing: 9,
-                    runSpacing: 9,
-                    children: <Widget>[
-                      for (final t in _tagPool)
-                        FilterChip(
-                          label: Text(t),
-                          selected: _tags.contains(t),
-                          onSelected: (on) => setState(() => on ? _tags.add(t) : _tags.remove(t)),
-                        ),
-                    ],
-                  ),
+              const _FieldLabel('标签（可多选）'),
+              Wrap(
+                spacing: 9,
+                runSpacing: 9,
+                children: <Widget>[
+                  for (final t in ActivityState.tagPool)
+                    FilterChip(
+                      label: Text(t),
+                      selected: _tags.contains(t),
+                      onSelected: (on) => setState(() => on ? _tags.add(t) : _tags.remove(t)),
+                    ),
+                ],
+              ),
                 ],
               ),
               const SizedBox(height: 14),
 
               _card(
                 children: <Widget>[
-                  TextFormField(
+                  AppField(
                     controller: _desc,
                     maxLines: 4,
                     maxLength: 300,
-                    decoration: const InputDecoration(
-                      labelText: '活动介绍（选填）',
-                      alignLabelWithHint: true,
-                      hintText: '集合方式、费用、需要带什么，写清楚能少一半的来回问',
-                    ),
+                    hintText: '集合方式、费用、需要带什么，写清楚能少一半的来回问',
                   ),
                 ],
               ),

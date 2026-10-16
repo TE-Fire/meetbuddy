@@ -30,4 +30,16 @@ class Env {
 
   /// 当前数据源的名字，登录页右上角展示，避免演示时忘了切没切 mock。
   static String get sourceLabel => useMock ? 'MOCK' : apiBase;
+
+  /// 后端存的图片是相对路径（`/uploads/xxx.png`），拼上前缀才是能加载的 URL。
+  /// 已经是绝对地址的原样返回——历史上传数据里存过带 host 的完整地址。
+  static String? imgUrl(String? path) {
+    if (path == null || path.isEmpty) {
+      return null;
+    }
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+    return '$apiBase$path';
+  }
 }

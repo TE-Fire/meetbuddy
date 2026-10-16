@@ -61,6 +61,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
                     ),
                   ),
                   _filterBar(context, state),
+                  _sortBar(context, state),
                   if (state.geoEnabled) _radiusBar(context, state),
                   const SizedBox(height: 10),
                 ],
@@ -159,6 +160,29 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
     );
   }
 
+  /// 排序行。与分类是两个维度：分类决定"看什么"，排序决定"先看哪条"，
+  /// 所以单独一行、视觉上压一档（无边框、字号更小）。
+  Widget _sortBar(BuildContext context, ActivityState state) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(22, 12, 22, 0),
+      child: Row(
+        children: <Widget>[
+          const Icon(Icons.swap_vert_rounded, size: 16, color: AppBrand.muted),
+          const SizedBox(width: 8),
+          for (final s in ActivityState.sorts)
+            _SortChip(
+              label: s.label,
+              selected: state.sortBy == s.value,
+              // "最近"要有经纬度才有意义。这里选择置灰而不是隐藏——
+              // 隐藏会让这行在两个状态间来回变长度，置灰还能顺带提示"有这个能力"。
+              enabled: s.value != 'distance' || state.geoEnabled,
+              onTap: () => state.setSort(s.value),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _radiusBar(BuildContext context, ActivityState state) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
@@ -251,6 +275,56 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// 排序项。刻意比 CategoryChip 轻一档：没有边框、不占满高度，
+/// 避免和上面那排分类抢视觉重心。
+class _SortChip extends StatelessWidget {
+  const _SortChip({
+    required this.label,
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color fg;
+    if (!enabled) {
+      fg = const Color(0xFFBFCBD4);
+    } else if (selected) {
+      fg = AppBrand.primaryDeep;
+    } else {
+      fg = AppBrand.muted;
+    }
+    return PressableScale(
+      scale: 0.92,
+      onTap: enabled ? onTap : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        margin: const EdgeInsets.only(right: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected && enabled ? AppBrand.primarySoft : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+            color: fg,
+          ),
+        ),
       ),
     );
   }

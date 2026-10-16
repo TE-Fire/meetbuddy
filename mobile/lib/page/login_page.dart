@@ -162,53 +162,45 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
-                          TextField(
+                          AppField(
                             controller: _phone,
                             keyboardType: TextInputType.phone,
-                            decoration: const InputDecoration(
-                              labelText: '手机号',
-                              prefixIcon: Icon(Icons.phone_iphone_rounded, size: 20),
-                            ),
+                            hintText: '手机号',
+                            prefixIcon: Icons.phone_iphone_rounded,
                           ),
                           const SizedBox(height: 14),
                           if (_mode == _Mode.register) ...<Widget>[
-                            TextField(
+                            AppField(
                               controller: _nickname,
-                              decoration: const InputDecoration(
-                                labelText: '昵称',
-                                prefixIcon: Icon(Icons.badge_outlined, size: 20),
-                              ),
+                              hintText: '昵称',
+                              prefixIcon: Icons.badge_outlined,
                             ),
                             const SizedBox(height: 14),
                           ],
                           if (needsPassword)
-                            TextField(
+                            AppField(
                               controller: _password,
                               obscureText: true,
+                              hintText: '密码',
+                              prefixIcon: Icons.lock_outline_rounded,
+                              textInputAction: TextInputAction.go,
                               onSubmitted: (_) => _submit(),
-                              decoration: const InputDecoration(
-                                labelText: '密码',
-                                prefixIcon: Icon(Icons.lock_outline_rounded, size: 20),
-                              ),
                             ),
                           if (needsCode)
                             Row(
                               children: <Widget>[
                                 Expanded(
-                                  child: TextField(
+                                  child: AppField(
                                     controller: _code,
                                     keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(
-                                      labelText: '验证码',
-                                      prefixIcon: Icon(Icons.sms_outlined, size: 20),
-                                    ),
+                                    hintText: '验证码',
+                                    prefixIcon: Icons.sms_outlined,
                                   ),
                                 ),
                                 const SizedBox(width: 10),
-                                GhostButton(
-                                  text: _countdown > 0 ? '${_countdown}s' : '获取验证码',
-                                  height: 54,
-                                  onPressed: _countdown > 0 ? null : _sendCode,
+                                _CodeButton(
+                                  countdown: _countdown,
+                                  onSend: _sendCode,
                                 ),
                               ],
                             ),
@@ -345,6 +337,99 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// 「获取验证码」按钮。
+///
+/// 刻意不复用 [GhostButton]，因为三种状态在语义上不是"可用/不可用"两档：
+/// - **可点**：白底描边，右侧一个纸飞机图标，表示"发出去"；
+/// - **发送中**：转圈，表示请求在路上。这一档缺了的话，弱网下用户会以为没点上而连点，
+///   而后端对同一号码有频控——真正的后果是一串"操作太频繁"的报错；
+/// - **倒计时**：**不是禁用态**，是"已经发出去了，在等"。所以不能画成灰掉的按钮
+///   （灰按钮读起来是"这个功能坏了"）。改成浅蓝底 + 蓝色文字 + 一个逐渐收短的进度环，
+///   把"还剩多久"同时用数字和环形说一遍。
+///
+/// 宽度**固定 116**：三档文案是「获取验证码」/「发送中」/「60s」，字数不同。
+/// 不固定的话这个按钮会随秒数变化宽窄，把左边的输入框推来推去——倒计时每跳一秒，
+/// 用户正在输入的手机号就横移一次，这是最烦人的一类抖动。
+class _CodeButton extends StatefulWidget {
+  const _CodeButton({required this.countdown, required this.onSend});
+
+  final int countdown;
+  final Future<void> Function() onSend;
+
+  @override
+  State<_CodeButton> createState() => _CodeButtonState();
+}
+
+class _CodeButtonState extends State<_CodeButton> {
+  bool _sending = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final counting = widget.countdown > 0;
+    // 三档互斥：发送中 → 倒计时 → 可点。文案上 `_sending` 优先，因为"请求在路上"
+    // 比"还有 58 秒"更该被看到；而配色上两者共用一套（都是"等着"）。
+    final busy = _sending || counting;
+    return SizedBox(
+      width: 116,
+      height: 54,
+      child: GhostButton(
+        text: _sending ? '发送中' : (counting ? '${widget.countdown}s' : '获取验证码'),
+        height: 54,
+        // 倒计时与发送中都传 null：点不了，也就不该有按压反馈
+        // （有反馈等于承诺"点到了"，而实际上什么也不会发生）。
+        // 它们**不是禁用态**——配色由下面四个覆盖口接管，不会走进灰按钮那条路。
+        onPressed: busy ? null : _tap,
+        icon: _sending
+            ? null
+            : (counting ? Icons.hourglass_bottom_rounded : Icons.send_rounded),
+        iconColor: busy ? AppBrand.primaryDeep : null,
+        textColor: busy ? AppBrand.primaryDeep : null,
+        background: busy ? AppBrand.primarySoft.withValues(alpha: 0.45) : null,
+        borderColor: busy ? AppBrand.primary.withValues(alpha: 0.35) : null,
+        child: counting ? _CountdownRing(remaining: widget.countdown) : null,
+      ),
+    );
+  }
+
+  Future<void> _tap() async {
+    setState(() => _sending = true);
+    try {
+      await widget.onSend();
+    } finally {
+      // _sendCode 内部失败时自己不抛（错误走页面上的 _error 条），所以这里一定收得到尾巴。
+      // finally 而不是 try 之后：中途返回或抛异常时按钮不能卡在"发送中"。
+      if (mounted) {
+        setState(() => _sending = false);
+      }
+    }
+  }
+}
+
+/// 倒计时进度环。用 [CircularProgressIndicator] 的 `value` 驱动，
+/// 不给 value 就是无限转圈（那是"加载中"），给了才是"还剩这么多"。
+class _CountdownRing extends StatelessWidget {
+  const _CountdownRing({required this.remaining});
+
+  final int remaining;
+
+  /// 与 [_CodeButtonState] 之外的后端频控窗口一致：60 秒。
+  static const int _window = 60;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 15,
+      height: 15,
+      child: CircularProgressIndicator(
+        value: remaining.clamp(0, _window) / _window,
+        strokeWidth: 2,
+        backgroundColor: AppBrand.primary.withValues(alpha: 0.18),
+        valueColor: const AlwaysStoppedAnimation<Color>(AppBrand.primary),
       ),
     );
   }

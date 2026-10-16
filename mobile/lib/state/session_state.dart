@@ -142,6 +142,46 @@ class SessionState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 更新资料。成功后连本地缓存一起刷新——否则下一次冷启动会拿旧昵称点亮界面，
+  /// 要等 `/user/me` 回来才纠正，中间会闪一下旧值。
+  Future<void> updateProfile({
+    required String nickname,
+    String? bio,
+    required int gender,
+  }) async {
+    _busy = true;
+    notifyListeners();
+    try {
+      final updated = await _user.updateProfile(nickname: nickname, bio: bio, gender: gender);
+      _me = updated;
+      final sp = await SharedPreferences.getInstance();
+      await sp.setString(_kUser, jsonEncode(_userToJson(updated)));
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
+  }
+
+  /// 标签走独立端点，后端不在这条路径上回传 UserVO，所以直接在本地合并，
+  /// 省掉一次 `/user/me` 往返。
+  Future<void> updateTags(List<String> tags) async {
+    _busy = true;
+    notifyListeners();
+    try {
+      await _user.updateTags(tags);
+      final cur = _me;
+      if (cur != null) {
+        final updated = cur.copyWith(tags: tags);
+        _me = updated;
+        final sp = await SharedPreferences.getInstance();
+        await sp.setString(_kUser, jsonEncode(_userToJson(updated)));
+      }
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> _clear() async {
     _api.setToken(null);
     _me = null;
@@ -160,5 +200,6 @@ class SessionState extends ChangeNotifier {
         'gender': u.gender,
         'bio': u.bio,
         'creditScore': u.creditScore,
+        'tags': u.tags,
       };
 }

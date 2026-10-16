@@ -2,19 +2,31 @@ import 'config/env.dart';
 import 'repository/activity_repository.dart';
 import 'repository/api_client.dart';
 import 'repository/auth_repository.dart';
+import 'repository/badge_repository.dart';
 import 'repository/chat_repository.dart';
 import 'repository/chat_socket.dart';
+import 'repository/credit_log_repository.dart';
 import 'repository/mock/mock_activity_repository.dart';
 import 'repository/mock/mock_auth_repository.dart';
+import 'repository/mock/mock_badge_repository.dart';
 import 'repository/mock/mock_chat_repository.dart';
 import 'repository/mock/mock_chat_socket.dart';
+import 'repository/mock/mock_credit_log_repository.dart';
 import 'repository/mock/mock_data.dart';
+import 'repository/mock/mock_notification_repository.dart';
+import 'repository/mock/mock_user_profile_repository.dart';
 import 'repository/mock/mock_user_repository.dart';
+import 'repository/notification_repository.dart';
 import 'repository/real/real_activity_repository.dart';
 import 'repository/real/real_auth_repository.dart';
+import 'repository/real/real_badge_repository.dart';
 import 'repository/real/real_chat_repository.dart';
 import 'repository/real/real_chat_socket.dart';
+import 'repository/real/real_credit_log_repository.dart';
+import 'repository/real/real_notification_repository.dart';
+import 'repository/real/real_user_profile_repository.dart';
 import 'repository/real/real_user_repository.dart';
+import 'repository/user_profile_repository.dart';
 import 'repository/user_repository.dart';
 
 /// 组合根。
@@ -28,8 +40,12 @@ class AppScope {
     required this.auth,
     required this.user,
     required this.activity,
+    required this.badge,
+    required this.creditLog,
     required this.chat,
     required this.socket,
+    required this.userProfile,
+    required this.notification,
     required this.usingMock,
   });
 
@@ -37,8 +53,12 @@ class AppScope {
   final AuthRepository auth;
   final UserRepository user;
   final ActivityRepository activity;
+  final BadgeRepository badge;
+  final CreditLogRepository creditLog;
   final ChatRepository chat;
   final ChatSocket socket;
+  final UserProfileRepository userProfile;
+  final NotificationRepository notification;
   final bool usingMock;
 
   factory AppScope.build() {
@@ -53,8 +73,12 @@ class AppScope {
         auth: MockAuthRepository(store),
         user: userRepo,
         activity: MockActivityRepository(store, userRepo),
+        badge: MockBadgeRepository(store),
+        creditLog: MockCreditLogRepository(store),
         chat: MockChatRepository(store),
         socket: MockChatSocket(store),
+        userProfile: MockUserProfileRepository(store),
+        notification: MockNotificationRepository(store),
         usingMock: true,
       );
     }
@@ -63,8 +87,12 @@ class AppScope {
       auth: RealAuthRepository(api),
       user: RealUserRepository(api),
       activity: RealActivityRepository(api),
+      badge: RealBadgeRepository(api),
+      creditLog: RealCreditLogRepository(api),
       chat: RealChatRepository(api),
       socket: RealChatSocket(),
+      userProfile: RealUserProfileRepository(api),
+      notification: RealNotificationRepository(api),
       usingMock: false,
     );
   }

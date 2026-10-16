@@ -26,6 +26,7 @@ class MockActivityRepository implements ActivityRepository {
   Future<PageData<Activity>> list({
     String? category,
     String? status,
+    String? sortBy,
     double? lng,
     double? lat,
     double? radius,
@@ -46,11 +47,15 @@ class MockActivityRepository implements ActivityRepository {
 
     final useGeo = lng != null && lat != null && radius != null;
     if (useGeo) {
-      rows = rows
-          .where((a) => MockStore.distanceKm(lng, lat, a.lng, a.lat) <= radius)
-          .toList()
-        ..sort((a, b) => MockStore.distanceKm(lng, lat, a.lng, a.lat)
-            .compareTo(MockStore.distanceKm(lng, lat, b.lng, b.lat)));
+      rows = rows.where((a) => MockStore.distanceKm(lng, lat, a.lng, a.lat) <= radius).toList();
+    }
+
+    // 与真实后端同一套规则：distance 只在地理模式下才有意义，其余情况一律降级 latest。
+    if (sortBy == 'hot') {
+      rows.sort((a, b) => b.currentParticipants.compareTo(a.currentParticipants));
+    } else if (sortBy == 'distance' && useGeo) {
+      rows.sort((a, b) => MockStore.distanceKm(lng, lat, a.lng, a.lat)
+          .compareTo(MockStore.distanceKm(lng, lat, b.lng, b.lat)));
     } else {
       rows.sort((a, b) => b.startTime.compareTo(a.startTime));
     }
@@ -94,11 +99,52 @@ class MockActivityRepository implements ActivityRepository {
       organizerId: _store.currentUserId,
       tags: draft.tags,
       coverUrl: draft.coverUrl,
+      images: draft.images,
     );
     // 后端是"创建即建群、本人即群主"，mock 必须一样，否则进群聊那步对不上。
     final group = _store.attachGroup(record, name: '${record.title} 群');
     _store.addGroupMessage(group.id, 0, '${_store.me.nickname} 创建了群聊「${record.title}」', msgType: 'SYSTEM');
     return CreatedActivity(id: record.id, groupId: group.id);
+  }
+
+  @override
+  Future<void> update(int id, ActivityDraft draft) async {
+    await _latency(420);
+    _store.ensureSeeded();
+
+    final r = _store.activity(id);
+    if (r == null) {
+      throw ApiException(1004, '活动不存在');
+    }
+    if (r.organizerId != _store.currentUserId) {
+      // 403 与 cancelActivity 同口径：mock 里"越权"一律用 HTTP 语义的 403
+      throw ApiException(403, '只有组织者可以编辑');
+    }
+    // 与后端同口径：OPEN/FULL 才让改，已开始或结束不再允许（避免改期影响已到场的人）
+    if (r.status != 'OPEN' && r.status != 'FULL') {
+      throw ApiException(1001, '活动已开始或已结束，无法编辑');
+    }
+    if (!draft.endTime.isAfter(draft.startTime)) {
+      throw ApiException(1001, '结束时间必须晚于开始时间');
+    }
+    if (draft.maxParticipants < r.currentParticipants) {
+      throw ApiException(1001, '人数上限不能小于当前已报名人数 ${r.currentParticipants}');
+    }
+
+    r
+      ..title = draft.title.trim()
+      ..category = draft.category
+      ..description = draft.description ?? ''
+      ..address = draft.address
+      ..lng = draft.lng
+      ..lat = draft.lat
+      ..startTime = draft.startTime
+      ..endTime = draft.endTime
+      ..maxParticipants = draft.maxParticipants
+      ..creditRequired = draft.creditRequired
+      ..tags = draft.tags.toList()
+      ..images = draft.images.toList()
+      ..coverUrl = draft.coverUrl;
   }
 
   @override

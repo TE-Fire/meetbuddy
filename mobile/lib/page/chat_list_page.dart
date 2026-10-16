@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 
 import '../model/chat_group.dart';
 import '../state/chat_state.dart';
+import '../state/notification_state.dart';
 import '../widget/state_views.dart';
 import '../widget/ui.dart';
 import 'chat_room_page.dart';
+import 'notification_page.dart';
 
 class ChatListPage extends StatefulWidget {
   const ChatListPage({super.key});
@@ -32,12 +34,19 @@ class _ChatListPageState extends State<ChatListPage> {
   @override
   Widget build(BuildContext context) {
     final chat = context.watch<ChatState>();
+    final notify = context.watch<NotificationState>();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('消息'),
         actions: <Widget>[
+          _BellButton(
+            unread: notify.unreadCount,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const NotificationPage()),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 18),
             child: _ConnPill(on: chat.connected),
@@ -77,6 +86,45 @@ class _ChatListPageState extends State<ChatListPage> {
       itemBuilder: (context, i) => StaggeredIn(
         index: i,
         child: _GroupTile(group: chat.groups[i]),
+      ),
+    );
+  }
+}
+
+/// 通知入口铃铛，带未读数角标。
+class _BellButton extends StatelessWidget {
+  const _BellButton({required this.unread, required this.onTap});
+
+  final int unread;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: '通知',
+      onPressed: onTap,
+      icon: Stack(
+        clipBehavior: Clip.none,
+        children: <Widget>[
+          const Icon(Icons.notifications_none_rounded),
+          if (unread > 0)
+            Positioned(
+              right: -6,
+              top: -4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: AppBrand.hot,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: Colors.white, width: 1.4),
+                ),
+                child: Text(
+                  bucketBadge(unread),
+                  style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Colors.white),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

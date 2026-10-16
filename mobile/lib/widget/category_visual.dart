@@ -71,10 +71,42 @@ class ActivityCover extends StatelessWidget {
       child: SizedBox(
         width: width,
         height: height,
-        child: Image.network(
-          url,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => _scene(visual),
+        child: Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            Image.network(
+              url,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => _scene(visual),
+            ),
+            // 日期徽标原先只画在插画封面（MapScene）上，**有 coverUrl 时被整个丢掉**——
+            // 于是"用自己的图"的活动反而没有时间信息，而这恰好是最需要一眼看到时间的场景
+            // （feed 卡片就是用这张图让人决定点不点进去）。这里补画到图片上，位置与插画一致。
+            //
+            // 底部压一层渐变遮罩：真实照片的左上角不保证是浅色，白字黑底胶囊压上去
+            // 在深色照片上还行，但胶囊自身的投影会糊在复杂纹理里。
+            // 压完遮罩之后胶囊的边界是清晰的，同时图片下沿的过渡也更像"设计过"。
+            if (badge != null)
+              const Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 46,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: <Color>[Color(0x33000000), Color(0x00000000)],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            if (badge != null)
+              Positioned(left: 12, top: 12, child: InkTag(badge!, color: badgeColor)),
+          ],
         ),
       ),
     );
@@ -113,11 +145,15 @@ class CategoryChip extends StatelessWidget {
       child: Semantics(
         button: true,
         selected: selected,
-        child: GestureDetector(
+        child: PressableScale(
+          // 0.93 而不是整卡的 0.97：chip 本身小，缩一点点在视觉上等于没动
+          scale: 0.93,
           onTap: onTap,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
+            duration: const Duration(milliseconds: 220),
+            // 选中态换个更有弹性的曲线：颜色瞬间到位、尺寸跟上，
+            // 有"吸住"的手感；匀速的话就只是换了个颜色。
+            curve: Curves.easeOutBack,
             padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 9),
             decoration: BoxDecoration(
               color: selected ? AppBrand.primary : Colors.white,

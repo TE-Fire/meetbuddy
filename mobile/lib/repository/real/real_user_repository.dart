@@ -24,4 +24,18 @@ class RealUserRepository implements UserRepository {
   Future<void> updateTags(List<String> tags) async {
     await _api.put('/api/user/tags', body: <String, dynamic>{'tags': tags});
   }
+
+  @override
+  Future<User> updateProfile({
+    required String nickname,
+    String? bio,
+    required int gender,
+  }) async {
+    final data = await _api.put('/api/user/profile', body: <String, dynamic>{
+      'nickname': nickname,
+      'bio': bio,
+      'gender': gender,
+    });
+    return User.fromJson(asMap(data));
+  }
 }

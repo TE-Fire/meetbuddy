@@ -29,6 +29,12 @@ class ActivityState extends ChangeNotifier {
     '其他',
   ];
 
+  /// 活动标签建议池。发布页与编辑页共用（小程序 `activity-edit.js` 的 `TAG_POOL` 同款），
+  /// 放 state 层是因为两页都要用，而页面各存一份迟早漂移。
+  static const List<String> tagPool = <String>[
+    '新手友好', '硬核', '深夜局', 'AA制', '免费', '带装备', '轻运动', '拍照',
+  ];
+
   /// 演示用坐标：北京国贸。桌面预览拿不到真实定位（没装定位插件），
   /// 所以在界面上明说是"演示坐标"，比假装定位到某处诚实。
   static const double demoLng = 116.4610;
@@ -36,6 +42,20 @@ class ActivityState extends ChangeNotifier {
 
   final List<Activity> feed = <Activity>[];
   String? category;
+
+  /// 排序方式。取值与后端的 `sortBy` 同名，中间不再翻译一层，
+  /// 免得出现"前端写 newest、后端认 latest"这类只在联调时才暴露的偏差。
+  /// `distance` 依赖经纬度，未开就近时后端静默降级成 latest —— 界面上那一项
+  /// 在未开就近时置灰，不让用户点了发现列表没动、以为坏了。
+  String sortBy = 'latest';
+
+  /// 排序选项。只有"值 + 显示名"两个字段，用 record 就够了。
+  static const List<({String value, String label})> sorts = <({String value, String label})>[
+    (value: 'latest', label: '最新'),
+    (value: 'hot', label: '最热'),
+    (value: 'distance', label: '最近'),
+  ];
+
   bool geoEnabled = false;
   double radius = 10;
 
@@ -65,6 +85,7 @@ class ActivityState extends ChangeNotifier {
     try {
       final data = await _activity.list(
         category: category,
+        sortBy: sortBy,
         lng: geoEnabled ? demoLng : null,
         lat: geoEnabled ? demoLat : null,
         radius: geoEnabled ? radius : null,
@@ -97,6 +118,14 @@ class ActivityState extends ChangeNotifier {
     await loadFeed();
   }
 
+  Future<void> setSort(String value) async {
+    if (sortBy == value) {
+      return;
+    }
+    sortBy = value;
+    await loadFeed();
+  }
+
   /// 开启就近筛选时顺手把坐标报给后端——不报坐标就进不了 GEO 候选集，
   /// 后面搭子匹配会搜不到自己。mock 下这次调用只是记个位置。
   Future<void> setGeo(bool on) async {
@@ -121,10 +150,14 @@ class ActivityState extends ChangeNotifier {
     }
   }
 
-  Future<void> loadMine() async {
+  /// 拉"我发起的 / 我报名的"两个列表。
+  ///
+  /// [size] 默认 20（"我的"页只展示计数与列表）；日程页要按日期分组铺满一屏，
+  /// 传 100 一次拉全，与小程序 `pages/schedule/schedule.js` 同口径。
+  Future<void> loadMine({int size = 20}) async {
     try {
-      final org = await _activity.mineOrganized();
-      final join = await _activity.mineJoined();
+      final org = await _activity.mineOrganized(size: size);
+      final join = await _activity.mineJoined(size: size);
       organized
         ..clear()
         ..addAll(org.list);

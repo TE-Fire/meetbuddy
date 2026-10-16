@@ -9,4 +9,14 @@ abstract class UserRepository {
 
   /// 覆盖式更新兴趣标签，传什么就是什么。
   Future<void> updateTags(List<String> tags);
+
+  /// 更新资料，返回更新后的自己。
+  ///
+  /// 后端 `PUT /user/profile` 是覆盖式语义：nickname/gender 必传，bio 传空即清空。
+  /// 头像不在这一批里——Flutter 侧选图要引原生插件（见 docs/14 的未做项）。
+  Future<User> updateProfile({
+    required String nickname,
+    String? bio,
+    required int gender,
+  });
 }

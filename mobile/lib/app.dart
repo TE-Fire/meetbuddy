@@ -5,7 +5,10 @@ import 'app_scope.dart';
 import 'page/home_shell.dart';
 import 'page/login_page.dart';
 import 'state/activity_state.dart';
+import 'state/badge_state.dart';
 import 'state/chat_state.dart';
+import 'state/credit_log_state.dart';
+import 'state/notification_state.dart';
 import 'state/session_state.dart';
 import 'widget/ui.dart';
 
@@ -32,8 +35,20 @@ class MeetbuddyApp extends StatelessWidget {
         ChangeNotifierProvider<ActivityState>(
           create: (_) => ActivityState(activity: scope.activity, user: scope.user),
         ),
+        ChangeNotifierProvider<BadgeState>(
+          create: (_) => BadgeState(repo: scope.badge),
+        ),
+        ChangeNotifierProvider<CreditLogState>(
+          create: (_) => CreditLogState(repo: scope.creditLog),
+        ),
         ChangeNotifierProvider<ChatState>(
           create: (_) => ChatState(repo: scope.chat, socket: scope.socket),
+        ),
+        ChangeNotifierProvider<NotificationState>(
+          create: (_) => NotificationState(
+            repo: scope.notification,
+            socket: scope.socket,
+          ),
         ),
       ],
       child: MaterialApp(
@@ -87,6 +102,9 @@ ThemeData buildTheme() {
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
+      // 这些值现在只作用于**没有走 AppField 的地方**（如聊天输入框、下拉框的
+      // 内嵌样式）。表单输入全部走 `widget/ui.dart` 的 `AppField`——它自带聚焦
+      // 过渡动画，而 theme 里的 border/fill 切换是瞬时的，做不到"点亮"的过程。
       filled: true,
       fillColor: const Color(0xFFF3F8FC),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
@@ -96,14 +114,21 @@ ThemeData buildTheme() {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppBrand.rSm),
-        borderSide: const BorderSide(color: Color(0xFFE4EEF6)),
+        borderSide: const BorderSide(color: Color(0xFFDEEBF4)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppBrand.rSm),
-        borderSide: BorderSide(color: primary, width: 1.7),
+        borderSide: BorderSide(color: primary, width: 1.8),
       ),
       labelStyle: const TextStyle(color: AppBrand.muted, fontSize: 14.5),
-      hintStyle: const TextStyle(color: Color(0xFFB9C6D0), fontSize: 14.5),
+      hintStyle: const TextStyle(color: Color(0xFFAEBCC6), fontSize: 14.5),
+    ),
+    // 光标与文字选中色统一成品牌蓝。默认是 Material 的蓝紫，
+    // 在一套天蓝设计里出现两秒紫光标，是很损质感的细节。
+    textSelectionTheme: const TextSelectionThemeData(
+      cursorColor: AppBrand.primaryDeep,
+      selectionColor: Color(0x3338B2F2),
+      selectionHandleColor: AppBrand.primary,
     ),
     // 主按钮在全局就是黑胶囊：弹窗确认、报名、发布都统一。
     filledButtonTheme: FilledButtonThemeData(
@@ -142,6 +167,15 @@ ThemeData buildTheme() {
       padding: EdgeInsets.symmetric(horizontal: 6, vertical: 9),
       labelStyle: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppBrand.ink2),
       secondaryLabelStyle: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Colors.white),
+      // 选中态投影换成品牌蓝辉光。默认的黑色投影在天蓝底色上会显脏，
+      // 且"选中"这件事本身就该用品牌色来表达——颜色、字重、辉光三者同向才整齐。
+      //
+      // 没有 `selectedElevation` 这个参数（`ChipThemeData` 只有 `elevation` 与
+      // `pressElevation`，选中态不单独控高度），所以选中态的"浮起"感只能靠
+      // 颜色与辉光表达；真要控高度，得自己画 chip（`CategoryChip` 就是那么干的）。
+      shadowColor: AppBrand.primary,
+      elevation: 2,
+      selectedShadowColor: AppBrand.primary,
     ),
     tabBarTheme: const TabBarThemeData(
       labelColor: AppBrand.ink,
@@ -151,6 +185,19 @@ ThemeData buildTheme() {
       dividerColor: Colors.transparent,
       indicatorColor: AppBrand.primary,
       indicatorSize: TabBarIndicatorSize.label,
+      // 指示器换成**胶囊滑块**而不是默认的下划线。下划线在两个状态下只是"长度变了"，
+      // 且 3px 高的一条线在 420px 的浅蓝渐变背景上几乎看不见——用户会以为根本没选中。
+      // 胶囊实底 + 白字是这套设计语言里已有的一等公民（chip、按钮都是胶囊），
+      // 复用它可以省掉"这里为什么长这样"的解释成本。
+      //
+      // 用 `_PillIndicator` 而非 `BoxDecoration`：后者需要 TabBar 自己去测每个 tab 的
+      // 宽度并插值，跨 tab 拖动时会出现两个胶囊中间闪一个长方形的过渡帧。
+      // `TabBarIndicatorSize.label` 保持不动——它是"胶囊只包住文字"，不是撑满整格。
+      indicator: _PillIndicator(),
+      // 指示器滑动给 300ms + 末端过冲，与底部导航的滑块同一节奏。
+      indicatorAnimation: TabIndicatorAnimation.elastic,
+      splashFactory: NoSplash.splashFactory,
+      overlayColor: WidgetStatePropertyAll<Color>(Colors.transparent),
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
@@ -184,6 +231,45 @@ ThemeData buildTheme() {
       },
     ),
   );
+}
+
+/// TabBar 的胶囊滑块指示器。
+///
+/// TabBar 会自动把指示器的采样区域裁到当前 tab 的 label 宽度内（`indicatorSize: label`），
+/// 位置与跨 tab 的插值也由它算好后通过 `offset` 传进来——所以这里只负责"把一个胶囊画在
+/// 给定矩形里"，不碰尺寸与位置。自己算宽度的话，两端 tab 文案长度不同时（'关注' / '粉丝'
+/// 与 '我发起的' / '我报名的'）会出现胶囊跟着变宽变窄的抖动。
+///
+/// 形状用"高度一半"当圆角半径（即胶囊），不用固定 `BorderRadius.circular(999)`：
+/// 后者在指示器被压到很窄时（长文案 + 小屏）会退化成两个圆加一条线；
+/// 按当前高度算半径永远是对的。
+class _PillIndicator extends Decoration {
+  const _PillIndicator();
+
+  @override
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) => _PillPainter();
+
+  /// 上下各留 7、左右各留 14 的余量，胶囊才不会贴住文字。
+  /// 这个值直接决定"胶囊比文字大多少"，改它等于改整个 TabBar 的视觉重量。
+  @override
+  EdgeInsetsGeometry get padding => const EdgeInsets.symmetric(horizontal: 14, vertical: 7);
+}
+
+class _PillPainter extends BoxPainter {
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    final size = configuration.size;
+    if (size == null || size.isEmpty) {
+      return;
+    }
+    // 必须叠加 offset：它是 TabBar 算好的落点。漏掉的话所有胶囊都会画在左上角。
+    final rect = offset & size;
+    final radius = Radius.circular(size.height / 2);
+    final rrect = RRect.fromRectAndRadius(rect, radius);
+    // 一圈蓝色辉光，让胶囊"浮"在浅蓝渐变背景之上而不是贴在上面。
+    canvas.drawShadow(Path()..addRRect(rrect), AppBrand.primary.withValues(alpha: 0.45), 3, false);
+    canvas.drawRRect(rrect, Paint()..color = AppBrand.primary);
+  }
 }
 
 /// 全局页面转场：淡入 + 轻微上滑 + 缩放，替代系统默认的水平推入。
@@ -250,8 +336,13 @@ class _RootGateState extends State<_RootGate> {
       _attachedUserId = me.id;
       final token = session.accessToken;
       final chat = context.read<ChatState>();
+      final notify = context.read<NotificationState>();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         chat.bindMe(me.id);
+        // 通知的红点也归"登录态"管：挂在 socket 上、并在挂的时候就把未读数拉一次，
+        // 否则冷启动后要先点进通知页才会看到红点。
+        notify.attach();
+        notify.loadUnread();
         if (token != null) {
           chat.attach(token);
         }

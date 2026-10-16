@@ -15,6 +15,7 @@ class RealActivityRepository implements ActivityRepository {
   Future<PageData<Activity>> list({
     String? category,
     String? status,
+    String? sortBy,
     double? lng,
     double? lat,
     double? radius,
@@ -24,6 +25,7 @@ class RealActivityRepository implements ActivityRepository {
     final data = await _api.get('/api/activity', query: <String, dynamic>{
       'category': category,
       'status': status,
+      'sortBy': sortBy,
       'lng': lng,
       'lat': lat,
       'radius': radius,
@@ -43,6 +45,13 @@ class RealActivityRepository implements ActivityRepository {
   Future<CreatedActivity> create(ActivityDraft draft) async {
     final data = await _api.post('/api/activity', body: draft.toJson());
     return CreatedActivity.fromJson(asMap(data));
+  }
+
+  @override
+  Future<void> update(int id, ActivityDraft draft) async {
+    // 编辑与发布复用同一个请求体（后端 ActivityCreateRequest），
+    // 所以这里直接拿 draft.toJson()——不为"编辑"再造一套字段名。
+    await _api.put('/api/activity/$id', body: draft.toJson());
   }
 
   @override

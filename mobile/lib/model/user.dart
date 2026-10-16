@@ -10,6 +10,7 @@ class User {
     this.gender,
     this.bio,
     this.creditScore = 100,
+    this.tags = const <String>[],
   });
 
   final int id;
@@ -20,6 +21,10 @@ class User {
   final String? bio;
   final int creditScore;
 
+  /// 兴趣标签。`GET /user/me` 与 `PUT /user/profile` 都回传，用于"我的"页展示与编辑；
+  /// 匹配算法里标签重合占 0.3 权重，所以这份不是纯展示数据。
+  final List<String> tags;
+
   factory User.fromJson(Map<String, dynamic> json) => User(
         id: asInt(json['id']),
         phone: asString(json['phone']),
@@ -28,9 +33,17 @@ class User {
         gender: asIntOrNull(json['gender']),
         bio: asStringOrNull(json['bio']),
         creditScore: asInt(json['creditScore'], 100),
+        tags: asStringList(json['tags']),
       );
 
-  User copyWith({String? nickname, String? avatar, String? bio, int? gender}) => User(
+  User copyWith({
+    String? nickname,
+    String? avatar,
+    String? bio,
+    int? gender,
+    List<String>? tags,
+  }) =>
+      User(
         id: id,
         phone: phone,
         nickname: nickname ?? this.nickname,
@@ -38,5 +51,6 @@ class User {
         gender: gender ?? this.gender,
         bio: bio ?? this.bio,
         creditScore: creditScore,
+        tags: tags ?? this.tags,
       );
 }

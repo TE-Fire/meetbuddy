@@ -26,7 +26,11 @@ class ActivityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final timeText = _timeText(activity.startTime);
-    final badgeColor = timeText.startsWith('今天') ? AppBrand.primary : AppBrand.black;
+    // 用 `_isToday` 判定而不是 `timeText.startsWith('今天')`。
+    // 字符串判定看着更短，但它把"文案生成"和"配色决策"绑在一起：以后想把文案改成
+    // "今日 14:30"、或者在前面加个图标，这个 startsWith 会静默失效——不报错，
+    // 只是今天的活动不再是蓝色，没人会注意到。
+    final badgeColor = _isToday(activity.startTime) ? AppBrand.primary : AppBrand.black;
 
     final cover = ActivityCover(
       category: activity.category,
@@ -96,7 +100,7 @@ class ActivityCard extends StatelessWidget {
                         SoftTag(
                           distanceKm == null
                               ? activity.address
-                              : '${_short(activity.address)} · ${_km(distanceKm!)}',
+                              : '${shortAddress(activity.address)} · ${_km(distanceKm!)}',
                           icon: Icons.place_rounded,
                         ),
                         SoftTag(activity.category, tone: SoftTagTone.grass),
@@ -162,26 +166,36 @@ class ActivityCard extends StatelessWidget {
   }
 
   /// 地址太长时只留最后一段（"朝阳区建国门外大街 1 号" → "建国门外大街 1 号"）。
-  static String _short(String address) {
+  ///
+  /// 口径与小程序 `utils/format.js` 的 `shortAddr` 逐字对齐。日程页也要用它，
+  /// 所以是 public：复制一份到日程页的话，"14 字截断"迟早在一处改成 12。
+  static String shortAddress(String address) {
     final parts = address.split('·').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
     final tail = parts.isEmpty ? address : parts.last;
     return tail.length <= 14 ? tail : '${tail.substring(0, 13)}…';
   }
 
+  /// 时间徽标文案。口径与小程序 `utils/format.js` 的 `timeBadge` 逐字对齐
+  /// （`今天 19:30` / `明天 09:00` / `10月17日 14:00`），
+  /// 改这里必须同步改那边——两端同一场活动显示成两个时间，比格式不好看严重得多。
   static String _timeText(DateTime? t) {
     if (t == null) {
       return '时间待定';
     }
-    final now = DateTime.now();
-    final sameDay = t.year == now.year && t.month == now.month && t.day == now.day;
-    final tomorrow = now.add(const Duration(days: 1));
-    final isTomorrow = t.year == tomorrow.year && t.month == tomorrow.month && t.day == tomorrow.day;
     final hm = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-    final md = '${t.month}月${t.day}日';
-    if (sameDay) return '今天 $hm';
-    if (isTomorrow) return '明天 $hm';
-    return '$md $hm';
+    if (_isToday(t)) return '今天 $hm';
+    if (_isTomorrow(t)) return '明天 $hm';
+    return '${t.month}月${t.day}日 $hm';
   }
+
+  /// 只比年月日，不碰时分秒——否则"今天 23:59"在 00:00 那一瞬会被算成昨天。
+  static bool _sameDate(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  static bool _isToday(DateTime? t) => t != null && _sameDate(t, DateTime.now());
+
+  static bool _isTomorrow(DateTime? t) =>
+      t != null && _sameDate(t, DateTime.now().add(const Duration(days: 1)));
 
   static String _km(double v) => v < 1 ? '${(v * 1000).round()}m' : '${v.toStringAsFixed(1)}km';
 }

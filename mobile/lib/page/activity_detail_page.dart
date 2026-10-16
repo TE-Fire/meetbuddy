@@ -9,6 +9,8 @@ import '../widget/category_visual.dart';
 import '../widget/state_views.dart';
 import '../widget/ui.dart';
 import 'chat_room_page.dart';
+import 'user_profile_page.dart';
+import 'activity_edit_page.dart';
 
 class ActivityDetailPage extends StatefulWidget {
   const ActivityDetailPage({super.key, required this.activityId});
@@ -86,18 +88,45 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
       appBar: AppBar(
         title: const Text('活动详情'),
         actions: <Widget>[
-          if (a != null)
+          if (a != null && a.organizer && (a.status == 'OPEN' || a.status == 'FULL'))
+            // 编辑入口：与后端约束一致，只有未开始（OPEN/FULL）的组织者能改。
+            // 已开始/结束的活动不进这里——进了也是被后端 400 挡回来。
             IconButton(
-              tooltip: a.favorited ? '取消收藏' : '收藏',
+              tooltip: '编辑活动',
               onPressed: _acting
                   ? null
-                  : () => _act(
-                        () => context.read<AppScope>().activity.favorite(a.id, on: !a.favorited),
-                        a.favorited ? '已取消收藏' : '已收藏',
-                      ),
-              icon: Icon(
-                a.favorited ? Icons.star : Icons.star_border,
-                color: a.favorited ? const Color(0xFFF5A623) : null,
+                  : () async {
+                      final changed = await Navigator.of(context).push(
+                        MaterialPageRoute<bool>(
+                          builder: (_) => ActivityEditPage(activityId: a.id),
+                        ),
+                      );
+                      if (changed == true && context.mounted) {
+                        await _load();
+                        final latest = _activity;
+                        if (latest != null && context.mounted) {
+                          context.read<ActivityState>().patch(latest);
+                        }
+                      }
+                    },
+              icon: const Icon(Icons.edit_outlined),
+            ),
+          if (a != null)
+            // 收藏是"翻转状态"而不是"按住"，所以弹一下而不是缩一下：
+            // 点完只换个图标形状的话，用户会怀疑到底点上没有。
+            BouncyTap(
+              enabled: !_acting,
+              onTap: () => _act(
+                () => context.read<AppScope>().activity.favorite(a.id, on: !a.favorited),
+                a.favorited ? '已取消收藏' : '已收藏',
+              ),
+              child: IconButton(
+                tooltip: a.favorited ? '取消收藏' : '收藏',
+                onPressed: null,
+                icon: Icon(
+                  a.favorited ? Icons.star : Icons.star_border,
+                  color: a.favorited ? const Color(0xFFF5A623) : null,
+                ),
               ),
             ),
         ],
@@ -248,51 +277,53 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
 
               const SectionHeader('组织者'),
               const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppBrand.rMd),
-                  boxShadow: AppBrand.cardSm,
-                ),
-                child: Row(
-                  children: <Widget>[
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: const BoxDecoration(
-                        gradient: AppBrand.brand,
-                        shape: BoxShape.circle,
+              // 整卡可点进主页（小程序同款）。organizerId 为空时不可点——
+              // 那时点下去只会推出一个"用户不存在"，比不可点更糟。
+              PressableScale(
+                onTap: a.organizerId == null
+                    ? null
+                    : () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => UserProfilePage(userId: a.organizerId!),
+                          ),
+                        ),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppBrand.rMd),
+                    boxShadow: AppBrand.cardSm,
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      UserAvatar(
+                        nickname: a.organizerNickname ?? '?',
+                        avatar: a.organizerAvatar,
+                        size: 42,
+                        shape: UserAvatarShape.circle,
                       ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        (a.organizerNickname ?? '?').characters.first,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              a.organizerNickname ?? '匿名用户',
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                            ),
+                            if (a.organizer)
+                              const Text(
+                                '就是你',
+                                style: TextStyle(fontSize: 12, color: AppBrand.muted),
+                              ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            a.organizerNickname ?? '匿名用户',
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                          ),
-                          if (a.organizer)
-                            const Text(
-                              '就是你',
-                              style: TextStyle(fontSize: 12, color: AppBrand.muted),
-                            ),
-                        ],
-                      ),
-                    ),
-                    if (a.organizer) const _OwnerBadge(),
-                  ],
+                      if (a.organizer) const _OwnerBadge(),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFFC3CFD9)),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -315,7 +346,17 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                   spacing: 10,
                   runSpacing: 10,
                   children: <Widget>[
-                    for (final p in a.participants) _ParticipantPill(nickname: p.nickname, credit: p.creditScore),
+                    for (final p in a.participants)
+                      _ParticipantPill(
+                        nickname: p.nickname,
+                        avatar: p.avatar,
+                        credit: p.creditScore,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => UserProfilePage(userId: p.userId),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
             ],
@@ -533,43 +574,49 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-/// 详情的报名人：小药丸（首字头像 + 昵称 + 信用分）。
+/// 详情的报名人：小药丸（首字头像 + 昵称 + 信用分）。整枚可点进对方主页。
 class _ParticipantPill extends StatelessWidget {
-  const _ParticipantPill({required this.nickname, required this.credit});
+  const _ParticipantPill({
+    required this.nickname,
+    required this.avatar,
+    required this.credit,
+    required this.onTap,
+  });
 
   final String nickname;
+  final String? avatar;
   final int credit;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: AppBrand.cardSm,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Container(
-            width: 26,
-            height: 26,
-            decoration: const BoxDecoration(gradient: AppBrand.brand, shape: BoxShape.circle),
-            alignment: Alignment.center,
-            child: Text(
-              nickname.characters.first,
-              style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w800),
+    return PressableScale(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: AppBrand.cardSm,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            UserAvatar(
+              nickname: nickname,
+              avatar: avatar,
+              size: 26,
+              shape: UserAvatarShape.circle,
             ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            nickname,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppBrand.ink),
-          ),
-          const SizedBox(width: 6),
-          Text('$credit', style: const TextStyle(fontSize: 11, color: AppBrand.muted)),
-        ],
+            const SizedBox(width: 8),
+            Text(
+              nickname,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppBrand.ink),
+            ),
+            const SizedBox(width: 6),
+            Text('$credit', style: const TextStyle(fontSize: 11, color: AppBrand.muted)),
+          ],
+        ),
       ),
     );
   }
