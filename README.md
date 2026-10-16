@@ -114,6 +114,7 @@ cd server/docker && docker compose up -d   # mb-redis，宿主端口 6380
 | ~~Flutter 交互返工（续）~~ ✅ | 按钮反馈 / tab 动画 / 封面日期标签 | 主次按钮共用 `_BouncyButtonBody`、底部导航与 TabBar 滑块、验证码三态、封面日期徽标补画 ✅（规则见 `docs/14`） |
 | ~~Flutter 表单与按钮质感~~ ✅ | 输入框四态 / 按钮渐变受光 | 新增 `AppField` 替换 11 处输入、`_ButtonFace` 渐变 + 顶部受光线、光标选区统一品牌蓝；口径定稿到 `docs/01` 第十节 ✅ |
 | ~~Flutter 端对齐（第 3 批）~~ ✅ | 活动编辑 / 勋章墙 / 我的日程 / 信用明细 | 四页 + 编辑页全量回传与自绘区间时间面板；日程复用 organized/joined 不新增仓储；配图只删不加（无选图插件）✅（规则见 `docs/14`） |
+| ~~Flutter 端对齐（第 4 批）~~ ✅ | 分享海报 / 找搭子 | `poster` 用 `CustomPainter` 复刻版式 + `RepaintBoundary` 导出（web 触发下载、非 web 弹预览）；`buddy` 双页签 + 匹配/我的需求，组合根 real/mock 双注册；详情页底部操作条最左加「分享」入口 ✅（规则见 `docs/14`） |
 | M7 | 实验与论文 | 三组实验出数据，落到论文章节 |
 
 ## 常用命令

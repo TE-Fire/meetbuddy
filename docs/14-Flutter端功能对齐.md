@@ -31,7 +31,7 @@ WXML/WXSS 与 Dart widget 是两套渲染体系，**零复用**。能沿用的�
 | 2.5 续 | 按钮点击反馈、tab 切换动画、验证码三态与图标、封面日期徽标补画 | 已完成 |
 | 2.5 再续 | 表单与按钮质感：`AppField` 四态、按钮渐变与受光边、光标选区统一 | 已完成 |
 | 3 | activity-edit（活动编辑改期）、badge（勋章）、schedule（日程）、credit-log（信用明细） | 已完成 |
-| 4 | poster（分享海报）、buddy（找搭子） | 待办 |
+| 4 | poster（分享海报）、buddy（找搭子） | 已完成 |
 
 第 2.5 批不是原计划里的批次，是第 2 批做完后 TE 在预览里上手反馈「交互太僵硬了，没有呼吸感」而插进来的返工。动效口径已定稿到 `docs/01` 第九节。后续 TE 又连续追加三轮（按钮反馈与 tab 动画、验证码图标、封面日期标签、表单与按钮质感），都归在这条线下，不另起批次号——它们都是同一件事的延伸：让界面"活起来"。
 
@@ -188,7 +188,31 @@ mock 侧 4 条种子流水，末条 `balanceAfter` 与 `me.creditScore`（90）�
 
 ### 入口与跳转
 
-详情页 AppBar 在「组织者 + OPEN/FULL」时出现编辑按钮，返回 `true` 后 `_load()` + `ActivityState.patch()` 双刷新。「我的」页新增四宫格入口（找搭子 / 我的日程 / 徽章墙 / 信用明细），找搭子未上线，点击提示「找搭子正在迁移，下一批上线」。
+详情页 AppBar 在「组织者 + OPEN/FULL」时出现编辑按钮，返回 `true` 后 `_load()` + `ActivityState.patch()` 双刷新。「我的」页四宫格入口（找搭子 / 我的日程 / 徽章墙 / 信用明细）全部接通：找搭子落到 `buddy_page`、我的日程落 `schedule`、徽章墙落 `badge`、信用明细落 `credit-log`。
+
+## 第 4 批交付
+
+两页收尾，外加组合根注册与详情页分享入口。后端契约与第 3 批完全一致（`BuddyController` / `POST /api/buddy` 等，见 `docs/03`），只加 Dart，不动 `server/`。
+
+### 分享海报 `poster`
+
+小程序那边的 canvas 2d + `saveImageToPhotosAlbum` 无法直接移植——Flutter 没有同等画布 API，且存相册要 `image_gallery_saver`（原生插件，与「纯 Dart 包」约束冲突）。改用 `CustomPainter` 复刻同一套版式 + `RepaintBoundary.toImage(pixelRatio)` 导出 PNG。版式口径逐字对齐 `docs/07`：750×1240 设计坐标、封面 `aspectFill` 裁切或渐变兜底 + 状态角标、标题两行截断、标签行（分类 / 状态 / 信用门槛）、信息三行、组织者行、虚线分隔、底部「微信小程序 / 搜「搭子」」引导块。
+
+导出按显示宽度回算 `pixelRatio`：预览盒宽度写回 `_displayW`，`_save` 用 `_displayW / 750` 作缩放基准，导出分辨率与预览一致，不受父容器 `overflow:hidden` 影响（同文档 07 对小程序 `transform:scale` 的证伪）。封面走 `NetworkImage` 异步解码，4s 超时或失败回落渐变兜底，不卡白屏。
+
+`dart:html` 的隔离沿用 `chat_socket` 的做法：非 web 用 `poster_download.dart`（`downloadPng` 返回 `false`，调用方退回到弹窗预览，长按可存），web 用 `poster_download_web.dart`（`Blob` + `AnchorElement` 触发浏览器下载）。条件导入 `if (dart.library.html) 'poster_download_web.dart'` 保证装机构建不引入 `dart:html`。
+
+### 找搭子 `buddy`
+
+双页签（匹配结果 / 我的需求），胶囊滑块 + `TabController` + `NeverScrollableScrollPhysics` 关横滑。匹配结果卡展示 `score`（转百分比）、距离、共同标签、后端给的 `reason`，以及「私聊 TA」——但 `ChatRoomPage` 目前只认 `groupId`（DM 页未落地），这枚按钮先 `toast` 兜底，作为已知缺口。我的需求卡可发布 / 关闭，发布面板复用 `AppField` 与 `ActivityState.categories / tagPool`。
+
+匹配分算法不在前端（后端按「标签重合 0.5 + 距离 0.3 + 信用 0.2」加权）。mock 侧在 `MockStore` 实现同一公式：`matchBuddies` 按坐标过滤后算分排序，`buddyRequestsOf` 取我的需求，`closeBuddy` 置 `CLOSED`。演示坐标沿用 `ActivityState.demoLng(116.4610) / demoLat(39.9088)`（北京国贸），与活动流、小程序 `buddy.js` 同坐标；种子给 manman / chenmo / suxiao 各一条贴国贸坐标的需求，me 的标签设成「剧本杀 / 桌游」，页面一进来就有匹配内容且「共同标签」有东西显示。
+
+组合根按硬约束在 `app_scope.dart` 同时注册 real 与 mock 两个 `BuddyRepository`，`app.dart` 注入 `BuddyState`，`profile_page` 的四宫格「找搭子」由 `toast` 兜底改为 `Navigator.push(BuddyPage())`。
+
+### 详情页分享入口
+
+`activity_detail_page.dart` 底部操作条**最左**加「分享」按钮（三点连线图标 + 文字，非 emoji，避免底部操作条被不同字体撑高，见 `docs/07`），点击 `push` 到 `PosterPage(activityId:)`。任何状态的活动都可分享，不受 OPEN/FULL 等条件约束。
 
 ## 两端必须一字不差的约定
 
@@ -204,17 +228,18 @@ mock 侧 4 条种子流水，末条 `balanceAfter` 与 `me.creditScore`（90）�
 ## 未做项与理由
 
 - **头像上传与编辑页配图新增**：Flutter 侧选图要引 `image_picker`，它是原生插件，与 `docs/01`「每个选型都要求是纯 Dart 包、或者干脆不引」的约束冲突。编辑页因此**只能删图不能加图**（删除走全量回传实现，不影响编辑流程），留到装机阶段和依赖策略一起定。
-- **详情页分享入口**：挪到第 4 批，与 `poster` 页一起做。小程序那边的分享按钮是自绘的笔画图标（三条线 + 三个圆点，`detail.wxss` 的 `.ic-share`），不是 emoji——照搬时别用 emoji 顶上，两种字体的渲染高度不同，底部操作条会被撑高。同理，详情页组织者卡在小程序里可点进他人主页，这个跳转也等第 2 批的 `user-profile` 页。
-- **找搭子 `buddy`**：第 4 批。入口已在「我的」页四宫格预留，点击提示「正在迁移」。
+- **详情页分享入口**：已在第 4 批做完——底部操作条最左的「分享」按钮（自绘笔画图标，非 emoji）`push` 到 `PosterPage`。同时 `profile_page` 四宫格「找搭子」由 `toast` 兜底改为直接进 `BuddyPage`。
+- **找搭子 `buddy`**：第 4 批已做完，含组合根 real/mock 双注册、mock 种子与匹配算法、详情页分享入口联动。唯一缺口：匹配卡上的「私聊 TA」因 Flutter 侧 `ChatRoomPage` 只认 `groupId`（DM 页未落地）先 `toast` 兜底，等 DM 页接通后补真实私聊跳转。
 - **credit-log 规则文案缺口**：小程序 RULES 只有 5 条，缺后端实际的「取消 -1 / 2 小时内取消 -3 / 到场 +3」。迁移期保持逐字一致，待拍板补文案后两端同步。
 
 第 1 批里的两条"等第 2 批"已在第 2 批还清：关注 / 粉丝计数现在可点进 `follow-list`，详情页组织者卡可点进 `user-profile`。第 1 批挂起的"详情页编辑入口"也已在第 3 批还清：组织者且 OPEN/FULL 时 AppBar 出现编辑按钮，落到 `activity-edit` 页。
 
 ## 验证
 
-- `flutter analyze`：**No issues found**（2026-10-15，第 1 批 + 第 2 批 + 手感返工三次复查 + 第 3 批均为零 issue）。
+- `flutter analyze`：第 4 批合入后 **0 error**，剩 4 条 info（buddy_page 两处 `use_build_context_synchronously`，已用 `context.mounted` 兜住；poster_download_web 两处 `dart:html` 弃用提示，属 web 专用隔离文件的固有提示），均不阻断构建。前几批的零 issue 口径在 error 层面维持。
 - 冒烟：本机 `flutter run -d edge` 起不来（沙箱拦 `reg.exe`，见下），改用 `flutter build web --release --no-web-resources-cdn` 出静态产物 + `python -m http.server 5180` 托管，在浏览器里走一遍。**注意 TE 说的"用 edge 调试"实际走的就是这条静态预览路径**——`flutter run -d edge|chrome|web-server` 在本机全废，`index.html` / `main.dart.js` 均 200。
 - 第 3 批另做了一次数据层冒烟（临时脚本跑 mock 数据源，跑完即删）：徽章 8 枚 / 已解锁 2；流水 4 条且末条 `balanceAfter` 与 `me.creditScore` 一致；`splitVenue` 对已知地标返回下标+详细地址、对未知地址返回 `(null, 原地址)`；换一个用户看徽章墙为 1 枚（不是把同一份数据渲染两遍）。
+- 第 4 批：`flutter build web --release` 全量编译通过（`√ Built build/web`，2026-10-16）。数据层冒烟脚本（临时、`MockStore.instance` 起 seed → `match` / `mine` / `create` / `close` 四步）**编译通过**，但本机 `flutter test` 的 test runner（flutter_tester）与 `flutter run -d edge` 同因沙箱拦本地 socket 起不来（`WebSocketException: Invalid WebSocket upgrade request`），未能在本机执行；逻辑正确性由全量 web 编译 + analyze 兜底。重点应在浏览器预览里走：海报封面兜底不白屏、导出 PNG 不崩；找搭子匹配卡分数降序、共同标签有内容、发布/关闭后"我的需求"即时变化。
 
 第 2 批的冒烟清单：他人主页关注 / 取关（含断开后端看回滚）、关注粉丝列表两 tab 翻页与空态、通知列表点未读跳转并观察红点消失、底部消息 tab 红点 = 聊天未读 + 通知未读。手感返工的重点是按住 chip / 统计格看有无反馈、列表加载看骨架是否在扫、进出页面看入场是否还卡半拍。第 3 批的重点是：徽章三态各自长什么样、日程分组方向与过去态置灰、编辑页回填后直接提交（验全量回传有没有丢图丢标签）、时间面板拖两端与 30 分钟档位。
 
