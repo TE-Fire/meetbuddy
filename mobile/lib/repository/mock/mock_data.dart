@@ -53,8 +53,13 @@ class MockStore {
   final List<AppNotification> notifications = <AppNotification>[];
 
   int _notificationIdSeq = 0;
+  int _buddyIdSeq = 0;
 
   bool _seeded = false;
+
+  /// 找搭子需求：`requestId -> 需求`。mock 下所有人发布的需求都在这，
+  /// `mine()` 按 userId 过滤，`match()` 按坐标过滤后算分。
+  final Map<int, MockBuddyRecord> buddyRequests = <int, MockBuddyRecord>{};
 
   /// 首次访问时灌入演示数据。页面代码不调用它，由 repository 惰性触发。
   void ensureSeeded() {
@@ -277,6 +282,38 @@ class MockStore {
       content: '「奥森公园夜跑 5 公里」明天 19:00 开始',
       bizId: a2.id,
       read: true,
+    );
+
+    // 找搭子：给另外三个人各发一条需求，坐标都贴着演示坐标（国贸），
+    // 这样默认 10km 半径内都能匹配到，页面一进来就有内容。me 的标签
+    // 设成「剧本杀 / 桌游」，让匹配结果的"共同标签"这一项有东西显示。
+    users[me.id] = me.copyWith(tags: const <String>['剧本杀', '桌游']);
+    addBuddy(
+      userId: manman.id,
+      title: '周末剧本杀差两个人',
+      description: '国贸附近店，硬核本优先，新手勿扰',
+      category: '剧本杀',
+      lng: 116.4610, lat: 39.9088,
+      timeRange: '周末下午',
+      tags: const <String>['剧本杀', '硬核'],
+    );
+    addBuddy(
+      userId: chenmo.id,
+      title: '羽毛球缺搭子',
+      description: '常营球馆，业余水平，AA 场地费',
+      category: '运动',
+      lng: 116.4700, lat: 39.9100,
+      timeRange: '工作日晚间',
+      tags: const <String>['羽毛球', 'AA制'],
+    );
+    addBuddy(
+      userId: suxiao.id,
+      title: '夜跑搭子约起',
+      description: '奥森南园 5 公里慢跑，配速 6 分半',
+      category: '运动',
+      lng: 116.4550, lat: 39.9050,
+      timeRange: '工作日晚间',
+      tags: const <String>['跑步', '夜跑'],
     );
   }
 
@@ -628,6 +665,99 @@ class MockStore {
     return hit.take(limit).toList();
   }
 
+  // ——— 找搭子 ———
+
+  MockBuddyRecord addBuddy({
+    required int userId,
+    required String title,
+    String? description,
+    required String category,
+    required double lng,
+    required double lat,
+    String? timeRange,
+    List<String> tags = const <String>[],
+    String status = 'OPEN',
+    DateTime? createdAt,
+  }) {
+    final record = MockBuddyRecord(
+      id: ++_buddyIdSeq,
+      userId: userId,
+      title: title,
+      description: description,
+      category: category,
+      lng: lng,
+      lat: lat,
+      timeRange: timeRange,
+      tags: tags,
+      status: status,
+      createdAt: createdAt ?? DateTime.now(),
+    );
+    buddyRequests[record.id] = record;
+    return record;
+  }
+
+  /// 某用户发布的需求（"我的需求"列表）。
+  List<MockBuddyRecord> buddyRequestsOf(int userId) =>
+      buddyRequests.values.where((b) => b.userId == userId).toList();
+
+  /// 关闭需求：OPEN → CLOSED。与后端的 `PUT /api/buddy/{id}/close` 同语义。
+  void closeBuddy(int id) {
+    final b = buddyRequests[id];
+    if (b != null) {
+      b.status = 'CLOSED';
+    }
+  }
+
+  List<MatchBuddyView> matchBuddies({
+    required double lng,
+    required double lat,
+    required double radius,
+    required List<String> myTags,
+    int limit = 20,
+  }) {
+    final out = <MatchBuddyView>[];
+    for (final b in buddyRequests.values) {
+      if (b.userId == currentUserId || b.status != 'OPEN') {
+        continue;
+      }
+      final d = distanceKm(b.lng, b.lat, lng, lat);
+      if (d > radius) {
+        continue;
+      }
+      final owner = users[b.userId];
+      final common = b.tags.where((t) => myTags.contains(t)).toList();
+      // 加权：标签重合 0.5 + 距离贴近 0.3 + 信用分 0.2。仅演示，与后端公式数值不一定一致，
+      // 但"标签越合、越近、信用越高越靠前"的方向一致（见 docs/01 第七节）。
+      final tagRatio = b.tags.isEmpty
+          ? 0.0
+          : common.length / b.tags.length;
+      final distFactor = (1 - (d / radius)).clamp(0.0, 1.0);
+      final credit = (owner?.creditScore ?? 60) / 100;
+      final score = (tagRatio * 0.5 + distFactor * 0.3 + credit * 0.2).clamp(0.0, 1.0);
+      final List<String> reasons = <String>[];
+      if (common.isNotEmpty) {
+        reasons.add('都玩「${common.first}」');
+      }
+      if (d < 1) {
+        reasons.add('离你 ${d < 0.1 ? '不到 100 米' : '${d.toStringAsFixed(1)} km'}');
+      } else {
+        reasons.add('离你 ${d.toStringAsFixed(1)} km');
+      }
+      out.add(MatchBuddyView(
+        record: b,
+        nickname: owner?.nickname ?? '匿名用户',
+        avatar: owner?.avatar,
+        creditScore: owner?.creditScore ?? 60,
+        distanceKm: d,
+        score: score,
+        commonTags: common,
+        reason: reasons.join('，'),
+      ));
+    }
+    out.sort((a, b) => b.score.compareTo(a.score));
+    return out.take(limit).toList();
+  }
+
   /// 两点间距离，公里。活动卡片上展示"距你 x km"用。
   static double distanceKm(double lng1, double lat1, double lng2, double lat2) {
     const earth = 6371.0;
@@ -703,4 +833,56 @@ class MockGroupRecord {
   final List<int> members = <int>[];
   final Map<int, String> roleOf = <int, String>{};
   bool readonly = false;
+}
+
+/// mock 用的搭子需求可变记录。真实实现里这些可变性都在数据库里。
+class MockBuddyRecord {
+  MockBuddyRecord({
+    required this.id,
+    required this.userId,
+    required this.title,
+    this.description,
+    required this.category,
+    required this.lng,
+    required this.lat,
+    this.timeRange,
+    this.tags = const <String>[],
+    this.status = 'OPEN',
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  final int id;
+  final int userId;
+  final String title;
+  final String? description;
+  final String category;
+  final double lng;
+  final double lat;
+  final String? timeRange;
+  List<String> tags;
+  String status;
+  final DateTime createdAt;
+}
+
+/// 匹配结果的中间视图：store 算分后带上昵称 / 头像 / 信用分，交给 repository 转成 `BuddyMatch`。
+class MatchBuddyView {
+  MatchBuddyView({
+    required this.record,
+    required this.nickname,
+    required this.avatar,
+    required this.creditScore,
+    required this.distanceKm,
+    required this.score,
+    required this.commonTags,
+    required this.reason,
+  });
+
+  final MockBuddyRecord record;
+  final String nickname;
+  final String? avatar;
+  final int creditScore;
+  final double distanceKm;
+  final double score;
+  final List<String> commonTags;
+  final String reason;
 }

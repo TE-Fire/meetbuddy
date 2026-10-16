@@ -3,12 +3,14 @@ import 'repository/activity_repository.dart';
 import 'repository/api_client.dart';
 import 'repository/auth_repository.dart';
 import 'repository/badge_repository.dart';
+import 'repository/buddy_repository.dart';
 import 'repository/chat_repository.dart';
 import 'repository/chat_socket.dart';
 import 'repository/credit_log_repository.dart';
 import 'repository/mock/mock_activity_repository.dart';
 import 'repository/mock/mock_auth_repository.dart';
 import 'repository/mock/mock_badge_repository.dart';
+import 'repository/mock/mock_buddy_repository.dart';
 import 'repository/mock/mock_chat_repository.dart';
 import 'repository/mock/mock_chat_socket.dart';
 import 'repository/mock/mock_credit_log_repository.dart';
@@ -20,6 +22,7 @@ import 'repository/notification_repository.dart';
 import 'repository/real/real_activity_repository.dart';
 import 'repository/real/real_auth_repository.dart';
 import 'repository/real/real_badge_repository.dart';
+import 'repository/real/real_buddy_repository.dart';
 import 'repository/real/real_chat_repository.dart';
 import 'repository/real/real_chat_socket.dart';
 import 'repository/real/real_credit_log_repository.dart';
@@ -42,6 +45,7 @@ class AppScope {
     required this.activity,
     required this.badge,
     required this.creditLog,
+    required this.buddy,
     required this.chat,
     required this.socket,
     required this.userProfile,
@@ -55,6 +59,7 @@ class AppScope {
   final ActivityRepository activity;
   final BadgeRepository badge;
   final CreditLogRepository creditLog;
+  final BuddyRepository buddy;
   final ChatRepository chat;
   final ChatSocket socket;
   final UserProfileRepository userProfile;
@@ -75,6 +80,7 @@ class AppScope {
         activity: MockActivityRepository(store, userRepo),
         badge: MockBadgeRepository(store),
         creditLog: MockCreditLogRepository(store),
+        buddy: MockBuddyRepository(store),
         chat: MockChatRepository(store),
         socket: MockChatSocket(store),
         userProfile: MockUserProfileRepository(store),
@@ -89,6 +95,7 @@ class AppScope {
       activity: RealActivityRepository(api),
       badge: RealBadgeRepository(api),
       creditLog: RealCreditLogRepository(api),
+      buddy: RealBuddyRepository(api),
       chat: RealChatRepository(api),
       socket: RealChatSocket(),
       userProfile: RealUserProfileRepository(api),

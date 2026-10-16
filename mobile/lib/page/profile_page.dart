@@ -13,6 +13,7 @@ import '../widget/state_views.dart';
 import '../widget/ui.dart';
 import 'activity_detail_page.dart';
 import 'badge_page.dart';
+import 'buddy_page.dart';
 import 'credit_log_page.dart';
 import 'follow_list_page.dart';
 import 'schedule_page.dart';
@@ -390,7 +391,9 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   }
 
   void _openBuddy(BuildContext context) {
-    _toast(context, '找搭子正在迁移，下一批上线');
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const BuddyPage()),
+    );
   }
 
   void _openBadges(BuildContext context) {

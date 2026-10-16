@@ -11,6 +11,7 @@ import '../widget/ui.dart';
 import 'chat_room_page.dart';
 import 'user_profile_page.dart';
 import 'activity_edit_page.dart';
+import 'poster_page.dart';
 
 class ActivityDetailPage extends StatefulWidget {
   const ActivityDetailPage({super.key, required this.activityId});
@@ -370,6 +371,21 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
     final scope = context.read<AppScope>();
 
     final List<Widget> buttons = <Widget>[];
+
+    // 分享入口：永远在最左（docs/07 约定）。任何状态的活动都能分享，所以不受下面的条件约束。
+    buttons.add(
+      Expanded(
+        flex: 1,
+        child: GhostButton(
+          text: '分享',
+          icon: Icons.share_outlined,
+          height: 50,
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => PosterPage(activityId: a.id)),
+          ),
+        ),
+      ),
+    );
 
     if (a.hasGroup) {
       buttons.add(

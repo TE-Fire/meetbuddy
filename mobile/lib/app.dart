@@ -6,6 +6,7 @@ import 'page/home_shell.dart';
 import 'page/login_page.dart';
 import 'state/activity_state.dart';
 import 'state/badge_state.dart';
+import 'state/buddy_state.dart';
 import 'state/chat_state.dart';
 import 'state/credit_log_state.dart';
 import 'state/notification_state.dart';
@@ -40,6 +41,9 @@ class MeetbuddyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<CreditLogState>(
           create: (_) => CreditLogState(repo: scope.creditLog),
+        ),
+        ChangeNotifierProvider<BuddyState>(
+          create: (_) => BuddyState(repo: scope.buddy),
         ),
         ChangeNotifierProvider<ChatState>(
           create: (_) => ChatState(repo: scope.chat, socket: scope.socket),
