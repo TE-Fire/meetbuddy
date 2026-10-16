@@ -15,6 +15,7 @@ import com.tefire.meetbuddy.mapper.ReportMapper;
 import com.tefire.meetbuddy.mapper.UserMapper;
 import com.tefire.meetbuddy.service.AdminService;
 import com.tefire.meetbuddy.service.CreditService;
+import com.tefire.meetbuddy.service.NotificationService;
 import com.tefire.meetbuddy.vo.AdminActivityVO;
 import com.tefire.meetbuddy.vo.AdminDashboardVO;
 import com.tefire.meetbuddy.vo.AdminReportVO;
@@ -62,6 +63,7 @@ public class AdminServiceImpl implements AdminService {
     private final ReportMapper reportMapper;
     private final CreditLogMapper creditLogMapper;
     private final CreditService creditService;
+    private final NotificationService notificationService;
     private final StringRedisTemplate redisTemplate;
 
     @Override
@@ -176,12 +178,20 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void takedown(Long activityId, String reason, Long adminId) {
+        Activity activity = BizAssert.notNull(activityMapper.selectById(activityId),
+                CommonErrorCode.NOT_FOUND, "活动 " + activityId + " 不存在");
         BizAssert.isTrue(adminMapper.setAdminStatus(activityId, 1) == 1,
                 CommonErrorCode.NOT_FOUND, "活动 " + activityId + " 不存在");
         // 下架原因留痕：复用 report 的 handle_result 语义不合适，这里仅落库 admin_status，
         // 原因写入一条信用分流水之外的独立通道成本过高，先以日志形式记录，后续可扩 takedown_log 表。
         org.slf4j.LoggerFactory.getLogger(AdminServiceImpl.class)
                 .info("[meetbuddy] 管理员 {} 下架活动 {}，原因：{}", adminId, activityId, reason);
+        // 通知组织者：活动被下架 + 原因（规则见 docs/05 第三节）
+        String why = (reason == null || reason.isBlank()) ? "" : "，原因：" + reason;
+        notificationService.notifyUser(activity.getOrganizerId(), "ACTIVITY_TAKEDOWN",
+                "活动已被下架",
+                "你的活动「" + activity.getTitle() + "」已被管理员下架" + why,
+                activityId);
     }
 
     @Override
@@ -214,6 +224,11 @@ public class AdminServiceImpl implements AdminService {
                     adminMapper.setAdminStatus(activity.getId(), 1);
                     creditService.change(activity.getOrganizerId(), -30,
                             "发布违规活动（举报成立，管理端判定）", reportId, adminId);
+                    // 活动被下架的组织者通知（规则见 docs/05 第三节）
+                    notificationService.notifyUser(activity.getOrganizerId(), "ACTIVITY_TAKEDOWN",
+                            "活动已被下架",
+                            "你的活动「" + activity.getTitle() + "」因举报成立已被管理员下架",
+                            activity.getId());
                 }
             } else if ("USER".equals(report.getTargetType())) {
                 creditService.change(report.getTargetId(), -20,
@@ -223,6 +238,14 @@ public class AdminServiceImpl implements AdminService {
         } else {
             adminMapper.handleReport(reportId, "REJECTED", adminId, handleResult);
         }
+        // 处理结果反馈给举报人，无论成立与否都有回音（规则见 docs/05 第三节）
+        String targetText = "ACTIVITY".equals(report.getTargetType()) ? "活动" : "用户";
+        String verdict = approved ? "举报成立，已对被举报方作出处理" : "举报未成立，暂不处理";
+        String detail = (handleResult == null || handleResult.isBlank()) ? verdict : handleResult;
+        notificationService.notifyUser(report.getReporterId(), "REPORT_HANDLED",
+                approved ? "举报已处理：成立" : "举报已处理：未成立",
+                "你举报的" + targetText + "已处理完成。" + detail,
+                report.getTargetId());
     }
 
     @Override

@@ -51,6 +51,12 @@ public class Activity {
 
     private Long groupId;
 
+    /** 是否已发"开始前提醒"（0 未发 / 1 已发），ReminderJob 置位防重，见 docs/05 */
+    private Integer reminded;
+
+    /** 是否已被 BadgeScanJob 评勋（0 未评 / 1 已评），置位防重，见 docs/06 */
+    private Integer badgeScanned;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

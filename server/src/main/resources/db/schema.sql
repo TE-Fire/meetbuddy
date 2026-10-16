@@ -40,6 +40,16 @@ CREATE TABLE IF NOT EXISTS user_tag (
   KEY idx_tag (tag_name)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '用户兴趣标签';
 
+CREATE TABLE IF NOT EXISTS user_follow (
+  id          BIGINT   NOT NULL AUTO_INCREMENT,
+  follower_id BIGINT   NOT NULL COMMENT '关注者',
+  followee_id BIGINT   NOT NULL COMMENT '被关注者',
+  created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_follow (follower_id, followee_id) COMMENT '幂等：重复关注被数据库挡下',
+  KEY idx_followee (followee_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '关注关系，见 docs/13';
+
 CREATE TABLE IF NOT EXISTS favorite (
   id          BIGINT   NOT NULL AUTO_INCREMENT,
   user_id     BIGINT   NOT NULL,
@@ -211,6 +221,30 @@ CREATE TABLE IF NOT EXISTS report (
   KEY idx_target (target_type, target_id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '举报';
 
+CREATE TABLE IF NOT EXISTS notification (
+  id          BIGINT       NOT NULL AUTO_INCREMENT,
+  user_id     BIGINT       NOT NULL COMMENT '接收人',
+  type        VARCHAR(24)  NOT NULL COMMENT 'SIGNUP_NEW/ACTIVITY_CANCELLED/ACTIVITY_REMINDER',
+  title       VARCHAR(100) NOT NULL,
+  content     VARCHAR(500) DEFAULT NULL,
+  biz_id      BIGINT       DEFAULT NULL COMMENT '关联业务 id，多为活动 id',
+  read_status TINYINT      NOT NULL DEFAULT 0 COMMENT '0 未读 / 1 已读',
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_user_read (user_id, read_status),
+  KEY idx_user_created (user_id, created_at)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '站内通知，见 docs/05';
+
+CREATE TABLE IF NOT EXISTS user_badge (
+  id          BIGINT   NOT NULL AUTO_INCREMENT,
+  user_id     BIGINT   NOT NULL COMMENT '获得者',
+  badge_code  VARCHAR(32) NOT NULL COMMENT '徽章编码，定义在 BadgeEnum（代码内，不建定义表）',
+  unlocked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_user_badge (user_id, badge_code) COMMENT '幂等：重复解锁被数据库挡下',
+  KEY idx_user (user_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '徽章解锁记录，见 docs/06';
+
 -- ============ M6 增量迁移（针对已存在的库，幂等） ============
 -- 新库靠上面的 CREATE TABLE 直接带列；旧库靠下面的 ALTER 补齐。
 -- 用存储过程包一层，先查 information_schema 再决定是否 ALTER，避免重复执行报错。
@@ -237,3 +271,37 @@ DELIMITER ;
 
 CALL migrate_m6();
 DROP PROCEDURE IF EXISTS migrate_m6;
+
+-- ============ M7 增量迁移（通知与提醒，幂等） ============
+DELIMITER $$
+DROP PROCEDURE IF EXISTS migrate_m7 $$
+CREATE PROCEDURE migrate_m7()
+BEGIN
+  IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = DATABASE() AND table_name = 'activity' AND column_name = 'reminded'
+  ) THEN
+    ALTER TABLE `activity` ADD COLUMN `reminded` TINYINT NOT NULL DEFAULT 0 COMMENT '是否已发开始前提醒（防重）';
+  END IF;
+END$$
+DELIMITER ;
+
+CALL migrate_m7();
+DROP PROCEDURE IF EXISTS migrate_m7;
+
+-- ============ M8 增量迁移（成就勋章与个人主页，幂等） ============
+DELIMITER $$
+DROP PROCEDURE IF EXISTS migrate_m8 $$
+CREATE PROCEDURE migrate_m8()
+BEGIN
+  IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = DATABASE() AND table_name = 'activity' AND column_name = 'badge_scanned'
+  ) THEN
+    ALTER TABLE `activity` ADD COLUMN `badge_scanned` TINYINT NOT NULL DEFAULT 0 COMMENT '是否已被 BadgeScanJob 评勋（防重）';
+  END IF;
+END$$
+DELIMITER ;
+
+CALL migrate_m8();
+DROP PROCEDURE IF EXISTS migrate_m8;

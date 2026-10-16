@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tefire.meetbuddy.common.ActivityStatus;
+import com.tefire.meetbuddy.common.BadgeEnum;
 import com.tefire.meetbuddy.common.PageVO;
 import com.tefire.meetbuddy.common.SignupStatus;
 import com.tefire.meetbuddy.common.error.ActivityErrorCode;
@@ -27,7 +28,9 @@ import com.tefire.meetbuddy.mapper.ChatGroupMemberMapper;
 import com.tefire.meetbuddy.mapper.FavoriteMapper;
 import com.tefire.meetbuddy.mapper.UserMapper;
 import com.tefire.meetbuddy.service.ActivityService;
+import com.tefire.meetbuddy.service.BadgeService;
 import com.tefire.meetbuddy.service.ChatService;
+import com.tefire.meetbuddy.service.NotificationService;
 import com.tefire.meetbuddy.util.GeoStore;
 import com.tefire.meetbuddy.vo.ActivityDetailVO;
 import com.tefire.meetbuddy.vo.ActivityVO;
@@ -41,6 +44,7 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +70,8 @@ public class ActivityServiceImpl implements ActivityService {
     private final GeoStore geoStore;
     /** 取消活动时给群里发系统消息。ChatService 只依赖 mapper，不依赖 ActivityService，无循环 */
     private final ChatService chatService;
+    private final NotificationService notificationService;
+    private final BadgeService badgeService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -122,6 +128,9 @@ public class ActivityServiceImpl implements ActivityService {
         saveImages(activity.getId(), request.getImages());
         geoStore.upsert(GeoStore.ACTIVITY_KEY, activity.getId(), activity.getLng(), activity.getLat());
 
+        // 首次发布徽章：insert 已成功，此人组织者身份的活动数至少为 1
+        badgeService.checkInstant(userId, BadgeEnum.FIRST_HOST);
+
         CreateActivityVO vo = new CreateActivityVO();
         vo.setId(activity.getId());
         vo.setGroupId(group.getId());
@@ -130,14 +139,17 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public PageVO<ActivityVO> list(String category, String status, String keyword,
-                                   BigDecimal lng, BigDecimal lat, Double radiusKm, long page, long size) {
+                                   BigDecimal lng, BigDecimal lat, Double radiusKm,
+                                   String sortBy, long page, long size) {
+        // 非法/空排序值一律退回 latest，避免前端传错把列表搞乱
+        String sort = "distance".equals(sortBy) || "hot".equals(sortBy) ? sortBy : "latest";
         boolean geo = lng != null && lat != null && radiusKm != null && radiusKm > 0;
         if (geo) {
             Map<Long, Double> nearby = geoStore.nearby(GeoStore.ACTIVITY_KEY, lng, lat, radiusKm);
             if (nearby.isEmpty()) {
                 return new PageVO<>(Collections.emptyList(), 0, page, size);
             }
-            // GEO 已经把半径外的滤掉了，剩下的按距离由近到远分页
+            // nearby 的 key 顺序即距离由近到远；非 distance 排序需另行重排
             List<Long> ids = new ArrayList<>(nearby.keySet());
             long from = Math.min((page - 1) * size, ids.size());
             long to = Math.min(from + size, ids.size());
@@ -145,14 +157,32 @@ public class ActivityServiceImpl implements ActivityService {
             if (pageIds.isEmpty()) {
                 return new PageVO<>(Collections.emptyList(), ids.size(), page, size);
             }
-            return toPage(activityMapper.selectPage(new Page<>(page, size),
-                    buildFilter(category, status, keyword).in(Activity::getId, pageIds)), ids.size());
+            List<Activity> records = activityMapper.selectList(
+                    buildFilter(category, status, keyword, sort).in(Activity::getId, pageIds));
+            List<Activity> ordered = sortActivities(records, sort, nearby);
+            return new PageVO<>(toVoList(ordered), ids.size(), page, size);
         }
 
-        return toPage(activityMapper.selectPage(new Page<>(page, size), buildFilter(category, status, keyword)));
+        return toPage(activityMapper.selectPage(new Page<>(page, size),
+                buildFilter(category, status, keyword, sort)));
     }
 
-    private LambdaQueryWrapper<Activity> buildFilter(String category, String status, String keyword) {
+    /** geo 分支已手动分页，这里按 sortBy 对当页记录重排（distance 沿用 nearby 的距离序）。 */
+    private List<Activity> sortActivities(List<Activity> records, String sort, Map<Long, Double> distance) {
+        if ("hot".equals(sort)) {
+            records.sort((a, b) -> {
+                int c = Integer.compare(b.getCurrentParticipants(), a.getCurrentParticipants());
+                return c != 0 ? c : b.getCreatedAt().compareTo(a.getCreatedAt());
+            });
+        } else if ("distance".equals(sort)) {
+            records.sort((a, b) -> Double.compare(distance.getOrDefault(a.getId(), 0d), distance.getOrDefault(b.getId(), 0d)));
+        } else {
+            records.sort(Comparator.comparing(Activity::getCreatedAt).reversed());
+        }
+        return records;
+    }
+
+    private LambdaQueryWrapper<Activity> buildFilter(String category, String status, String keyword, String sort) {
         LambdaQueryWrapper<Activity> q = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(category)) {
             q.eq(Activity::getCategory, category);
@@ -167,7 +197,12 @@ public class ActivityServiceImpl implements ActivityService {
         if (StringUtils.hasText(keyword)) {
             q.like(Activity::getTitle, keyword.trim());
         }
-        q.orderByDesc(Activity::getCreatedAt);
+        // distance 在非 geo 模式无法计算，降级为 latest
+        if ("hot".equals(sort)) {
+            q.orderByDesc(Activity::getCurrentParticipants).orderByDesc(Activity::getCreatedAt);
+        } else {
+            q.orderByDesc(Activity::getCreatedAt);
+        }
         return q;
     }
 
@@ -205,8 +240,10 @@ public class ActivityServiceImpl implements ActivityService {
     public void update(Long userId, Long activityId, ActivityCreateRequest request) {
         Activity activity = requireActivity(activityId);
         requireOrganizer(activity, userId);
-        if (!ActivityStatus.OPEN.name().equals(activity.getStatus())) {
-            throw CommonErrorCode.PARAM_ERROR.ex("只有报名中的活动可以编辑");
+        // 未开始（OPEN / FULL）都能改时间地点；已开始或结束后不再允许编辑，避免改期影响已到场的人
+        if (!ActivityStatus.OPEN.name().equals(activity.getStatus())
+                && !ActivityStatus.FULL.name().equals(activity.getStatus())) {
+            throw CommonErrorCode.PARAM_ERROR.ex("活动已开始或已结束，无法编辑");
         }
         if (!request.getEndTime().isAfter(request.getStartTime())) {
             throw CommonErrorCode.PARAM_ERROR.ex("结束时间必须晚于开始时间");
@@ -257,6 +294,16 @@ public class ActivityServiceImpl implements ActivityService {
         // 同时给群里落一条 SYSTEM 消息并即时推送，别让人还在群里傻等
         chatService.sendSystemToGroup(activity.getGroupId(), userId,
                 "活动「" + activity.getTitle() + "」已取消，本群转为只读");
+        // 取消活动 → 通知所有有效报名者。组织者自己不在报名列表，无需排除（见 docs/05）
+        List<Long> joined = signupMapper.selectList(new LambdaQueryWrapper<ActivitySignup>()
+                        .eq(ActivitySignup::getActivityId, activityId)
+                        .in(ActivitySignup::getStatus, SignupStatus.SIGNED.name(),
+                                SignupStatus.ATTENDED.name(), SignupStatus.ABSENT.name()))
+                .stream().map(ActivitySignup::getUserId).toList();
+        notificationService.notifyUsers(joined, "ACTIVITY_CANCELLED",
+                "活动已取消",
+                "你报名的「" + activity.getTitle() + "」已被组织者取消",
+                activityId);
     }
 
     @Override

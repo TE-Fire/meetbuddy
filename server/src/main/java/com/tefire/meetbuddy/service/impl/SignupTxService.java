@@ -2,6 +2,7 @@ package com.tefire.meetbuddy.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tefire.meetbuddy.common.ActivityStatus;
+import com.tefire.meetbuddy.common.BadgeEnum;
 import com.tefire.meetbuddy.common.SignupStatus;
 import com.tefire.meetbuddy.common.error.ActivityErrorCode;
 import com.tefire.meetbuddy.common.error.BizAssert;
@@ -14,7 +15,9 @@ import com.tefire.meetbuddy.mapper.ActivityMapper;
 import com.tefire.meetbuddy.mapper.ActivitySignupMapper;
 import com.tefire.meetbuddy.mapper.ChatGroupMemberMapper;
 import com.tefire.meetbuddy.mapper.UserMapper;
+import com.tefire.meetbuddy.service.BadgeService;
 import com.tefire.meetbuddy.service.CreditService;
+import com.tefire.meetbuddy.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +41,8 @@ public class SignupTxService {
     private final ChatGroupMemberMapper chatGroupMemberMapper;
     private final UserMapper userMapper;
     private final CreditService creditService;
+    private final NotificationService notificationService;
+    private final BadgeService badgeService;
 
     @Transactional(rollbackFor = Exception.class)
     public void doSignup(Long userId, Long activityId, String remark, boolean guarded) {
@@ -85,10 +90,18 @@ public class SignupTxService {
             signup.setStatus(SignupStatus.SIGNED.name());
             signup.setRemark(remark);
             signupMapper.insert(signup);
+            // 首次报名徽章：只有走 insert 分支（从未报过名）才是首次，取消后重新报名不算
+            badgeService.checkInstant(userId, BadgeEnum.FIRST_SIGNUP);
         }
 
         joinGroup(activity, userId);
         activityMapper.markFull(activityId);
+
+        // 有人报名 → 通知组织者。组织者报名已被上面挡掉，所以接收人天然不是刚操作的人（见 docs/05）
+        notificationService.notifyUser(activity.getOrganizerId(), "SIGNUP_NEW",
+                "有人报名了你的活动",
+                "「" + user.getNickname() + "」报名了「" + activity.getTitle() + "」",
+                activityId);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -138,6 +151,8 @@ public class SignupTxService {
                 signup.setStatus(SignupStatus.ATTENDED.name());
                 signupMapper.updateById(signup);
                 creditService.change(userId, 3, "被组织者确认到场", activityId, null);
+                // 到场累计徽章：更新后再数，本次这行已计入
+                badgeService.checkInstant(userId, BadgeEnum.ATTENDED_3);
             }
         }
         if (absent != null) {

@@ -71,9 +71,10 @@ public class ActivityController {
             @RequestParam(required = false) BigDecimal lng,
             @RequestParam(required = false) BigDecimal lat,
             @RequestParam(required = false) @DecimalMin("0.5") @DecimalMax("500") Double radius,
+            @RequestParam(required = false, defaultValue = "latest") String sortBy,
             @RequestParam(defaultValue = "1") @Min(1) long page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) long size) {
-        return Result.ok(activityService.list(category, status, keyword, lng, lat, radius, page, size));
+        return Result.ok(activityService.list(category, status, keyword, lng, lat, radius, sortBy, page, size));
     }
 
     @GetMapping("/mine/organized")

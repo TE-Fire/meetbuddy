@@ -19,11 +19,11 @@ public interface UserService {
     void updateTags(Long userId, List<String> tags);
 
     /**
-     * 编辑个人资料（昵称/简介/性别，均可选，null 不改）。
+     * 编辑个人资料（昵称/简介/性别/头像，均可选，null 不改）。
      *
      * @return 更新后的用户视图，前端直接刷新本地缓存
      */
-    UserVO updateProfile(Long userId, String nickname, String bio, Integer gender);
+    UserVO updateProfile(Long userId, String nickname, String bio, Integer gender, String avatar);
 
     /** 我的信用分明细，按时间倒序，只查自己的 */
     PageVO<CreditLogVO> creditLogs(Long userId, long page, long size);
